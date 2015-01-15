@@ -10,14 +10,24 @@
                 tools:context="com.tools.h46incon.doorcontroler.MainActivity"
     >
 
+    <TextView
+        android:id="@+id/__viewMiddleInvisible"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"
+        />
+
     <Button
         android:layout_width="@dimen/btn_width"
         android:layout_height="@dimen/btn_height"
         android:text="连接蓝牙"
         android:id="@+id/btsetting_btn"
-        android:layout_marginTop="52dp"
         android:background="@drawable/btn_custom"
         android:layout_alignParentTop="true"
-        android:layout_centerHorizontal="true"/>
+        android:layout_toLeftOf="@id/__viewMiddleInvisible"
+        android:layout_marginTop="74dp"
+        android:layout_marginRight="@dimen/btn_left_margin"
+        />
 
 </RelativeLayout>
