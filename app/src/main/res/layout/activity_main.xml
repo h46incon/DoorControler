@@ -26,8 +26,23 @@
         android:background="@drawable/btn_custom"
         android:layout_alignParentTop="true"
         android:layout_toLeftOf="@id/__viewMiddleInvisible"
+        android:layout_toStartOf="@id/__viewMiddleInvisible"
         android:layout_marginTop="74dp"
         android:layout_marginRight="@dimen/btn_left_margin"
+        android:layout_marginEnd="@dimen/btn_left_margin"
+        />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="蓝牙未连接"
+        android:id="@+id/btInfo_tv"
+        android:layout_alignBaseline="@id/btsetting_btn"
+        android:layout_toRightOf="@id/__viewMiddleInvisible"
+        android:layout_toEndOf="@id/__viewMiddleInvisible"
+        android:layout_marginLeft="@dimen/tv_left_margin_to_btn"
+        android:layout_marginStart="@dimen/tv_left_margin_to_btn"
+
         />
 
 </RelativeLayout>
