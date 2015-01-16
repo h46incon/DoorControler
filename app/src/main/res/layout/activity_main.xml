@@ -45,4 +45,16 @@
 
         />
 
+    <TextView
+        android:layout_width="fill_parent"
+        android:layout_height="200dp"
+        android:text=""
+        android:singleLine="false"
+        android:fadeScrollbars="false"
+        android:gravity="bottom"
+        android:scrollbars="vertical"
+        android:id="@+id/console_tv"
+        android:layout_alignParentBottom="true"
+        />
+
 </RelativeLayout>
