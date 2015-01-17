@@ -58,8 +58,24 @@ public class MainActivity extends ActionBarActivity {
 
 		private void BTClickHandler(State state)
 		{
-			// Todo: check current click is legal
-			onBTClick.onBTClick(state);
+			boolean isLegal = false;
+
+			// Exit button should always be handled
+			if (state == State.EXIT) {
+				isLegal = true;
+			} else {
+				// Should able to handle current step
+				// Also allow user to restart previous step
+				if (state.ordinal() <= curState.ordinal()) {
+					isLegal = true;
+				} else {
+					isLegal = false;
+				}
+			}
+
+			if (isLegal) {
+				onBTClick.onBTClick(state);
+			}
 		}
 
 		private void initVar()
@@ -97,6 +113,7 @@ public class MainActivity extends ActionBarActivity {
 		}
 
 		private final int stateNum = State._STATE_NUMBER.ordinal();
+		private final String TAG = "StateManager";
 
 		private State curState;
 		private ArrowHLManager arrowHLManager;
@@ -142,6 +159,11 @@ public class MainActivity extends ActionBarActivity {
 					case BT_SETTING:
 						startActivity(new Intent(Settings.ACTION_BLUETOOTH_SETTINGS));
 						break;
+				}
+
+				// TODO: test code
+				if (state != State.EXIT) {
+					stateManager.changeState(State.values()[state.ordinal() + 1]);
 				}
 			}
 		};
