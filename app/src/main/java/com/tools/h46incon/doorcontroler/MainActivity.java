@@ -1,9 +1,13 @@
 package com.tools.h46incon.doorcontroler;
 
+import android.app.AlertDialog;
+import android.bluetooth.BluetoothAdapter;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.support.v7.app.ActionBarActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -47,6 +51,11 @@ public class MainActivity extends ActionBarActivity {
 			}
 
 			arrowHLManager.highlight(imageViews[curState.ordinal()]);
+		}
+
+		public State getCurState()
+		{
+			return curState;
 		}
 
 		public void changeState(State state)
@@ -143,13 +152,16 @@ public class MainActivity extends ActionBarActivity {
 
 		initMember();
 
-
 	}
 
 	private void initMember()
 	{
 		TextView consoleTV = (TextView) findViewById(R.id.console_tv);
 		outputConsole = new OutputConsole(consoleTV);
+
+		btAdapter = BluetoothAdapter.getDefaultAdapter();
+
+		initExitingWithTurnOffBTDialog();
 
 		OnBTClick onBTClick = new OnBTClick() {
 			@Override
@@ -159,6 +171,8 @@ public class MainActivity extends ActionBarActivity {
 					case BT_SETTING:
 						startActivity(new Intent(Settings.ACTION_BLUETOOTH_SETTINGS));
 						break;
+					case EXIT:
+						exiting();
 				}
 
 				// TODO: test code
@@ -168,10 +182,53 @@ public class MainActivity extends ActionBarActivity {
 			}
 		};
 		stateManager = new StateManager(onBTClick, State.BT_SETTING);
+
 	}
 
+	private void initExitingWithTurnOffBTDialog()
+	{
+		AlertDialog.Builder builder = new AlertDialog.Builder(this);
+		builder.setMessage("退出时要顺便关闭蓝牙吗？");
+		builder.setTitle("退出");
+
+		builder.setPositiveButton("关了吧", new DialogInterface.OnClickListener() {
+			@Override
+			public void onClick(DialogInterface dialog, int which)
+			{
+				Log.i(TAG, "shutting down bluetooth...");
+				btAdapter.disable();
+				MyApp.showSimpleToast("蓝牙已关闭");
+				dialog.dismiss();
+				MainActivity.this.finish();
+			}
+		});
+
+		builder.setNegativeButton("不关", new DialogInterface.OnClickListener() {
+			@Override
+			public void onClick(DialogInterface dialog, int which)
+			{
+				dialog.dismiss();
+				MainActivity.this.finish();
+			}
+		});
+
+		exitingWithTurnOffBTDialog = builder.create();
+	}
+
+	private void exiting()
+	{
+		if (btAdapter.isEnabled()) {
+			exitingWithTurnOffBTDialog.show();
+		} else {
+			this.finish();
+		}
+	}
+
+	private final String TAG = "MainActivity";
 	private OutputConsole outputConsole;
+	private AlertDialog exitingWithTurnOffBTDialog;
 	private StateManager stateManager;
+	private BluetoothAdapter btAdapter;
 
 
 }
