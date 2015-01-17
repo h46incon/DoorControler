@@ -2,10 +2,9 @@ package com.tools.h46incon.doorcontroler;
 
 import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.os.Bundle;
-import android.provider.Settings;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.view.View;
@@ -15,6 +14,7 @@ import android.widget.TextView;
 
 
 public class MainActivity extends ActionBarActivity {
+
 
 	private static enum  State{
 		BT_SETTING,
@@ -169,7 +169,7 @@ public class MainActivity extends ActionBarActivity {
 			{
 				switch (state) {
 					case BT_SETTING:
-						startActivity(new Intent(Settings.ACTION_BLUETOOTH_SETTINGS));
+						connectBTDev();
 						break;
 					case EXIT:
 						exiting();
@@ -183,6 +183,11 @@ public class MainActivity extends ActionBarActivity {
 		};
 		stateManager = new StateManager(onBTClick, State.BT_SETTING);
 
+		Log.d(TAG, "current bt state: " + btAdapter.getState());
+		if (btAdapter.getState() == BluetoothAdapter.STATE_CONNECTED) {
+			Log.d(TAG, "BT is connected");
+			stateManager.changeState(State.DEV_SHAKEHAND);
+		}
 	}
 
 	private void initExitingWithTurnOffBTDialog()
@@ -215,6 +220,16 @@ public class MainActivity extends ActionBarActivity {
 		exitingWithTurnOffBTDialog = builder.create();
 	}
 
+	private void connectBTDev()
+	{
+		if (!btAdapter.isEnabled()) {
+			btAdapter.enable();
+		}
+
+		BTDiscoveryDialog btDiscoveryDialog = new BTDiscoveryDialog();
+		btDiscoveryDialog.setOnDevSelectListener(onBTDevSelectedListener);
+		btDiscoveryDialog.show(getFragmentManager(), "btDiscoveryDialog");
+	}
 	private void exiting()
 	{
 		if (btAdapter.isEnabled()) {
@@ -224,7 +239,16 @@ public class MainActivity extends ActionBarActivity {
 		}
 	}
 
+	private BTDiscoveryDialog.OnDevSelect onBTDevSelectedListener = new BTDiscoveryDialog.OnDevSelect() {
+		@Override
+		public void onDevSelect(BluetoothDevice device)
+		{
+			Log.d(TAG, "received selected device " + device.getAddress());
+		}
+	};
+
 	private final String TAG = "MainActivity";
+	private static final int REQUEST_ENABLE_BT = 0x67;
 	private OutputConsole outputConsole;
 	private AlertDialog exitingWithTurnOffBTDialog;
 	private StateManager stateManager;
