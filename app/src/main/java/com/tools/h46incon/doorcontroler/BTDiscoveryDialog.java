@@ -79,6 +79,8 @@ public class BTDiscoveryDialog extends DialogFragment{
 			btAdapter.cancelDiscovery();
 		}
 
+		mContext.unregisterReceiver(mReceiver);
+
 		super.onDestroy();
 	}
 
