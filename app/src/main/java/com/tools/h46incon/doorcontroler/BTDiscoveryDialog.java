@@ -102,11 +102,8 @@ public class BTDiscoveryDialog extends DialogFragment{
 		Resources resources = getResources();
 		displayMetrics = resources.getDisplayMetrics();
 
-		// TODO: show bonded devices and new devices differently?
 		btDevices = new ArrayList<>();
-		for (BluetoothDevice device : btAdapter.getBondedDevices()) {
-			btDevices.add(device);
-		}
+		// Not need to add bonded device because they will be found again.
 
 		// Instantiate an AlertDialog.Builder with its constructor
 		AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
