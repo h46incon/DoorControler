@@ -172,10 +172,6 @@ public class MainActivity extends ActionBarActivity {
 						exiting();
 				}
 
-				// TODO: test code
-				if (state != State.EXIT) {
-					stateManager.changeState(State.values()[state.ordinal() + 1]);
-				}
 			}
 		};
 		stateManager = new StateManager(onBTClick, State.BT_SETTING);
@@ -238,6 +234,9 @@ public class MainActivity extends ActionBarActivity {
 		{
 			Log.d(TAG, "received selected device " + device.getAddress());
 
+			outputConsole.printNewItem(
+					String.format("正在尝试连接蓝牙设备: %s (%s)", device.getName(), device.getAddress()));
+
 			if (connectBTSSPSocket(device) == false) {
 				return;
 			}
@@ -246,6 +245,18 @@ public class MainActivity extends ActionBarActivity {
 				return;
 			}
 
+			if (devShakeHand()) {
+				stateManager.changeState(State.OPEN_DOOR);
+			} else {
+				// clean
+				try {
+					btSocketIn.close();
+					btSocketOut.close();
+					btSocket.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
 
 		}
 	};
@@ -281,12 +292,12 @@ public class MainActivity extends ActionBarActivity {
 			}
 			btSocket = null;
 			Log.e(TAG, "Can not connect BT socket!");
-			outputConsole.printNewItem("Socket连接失败！");
+			outputConsole.printNewItem("Socket连接...失败！");
 			e.printStackTrace();
 			return false;
 		}
 
-		outputConsole.printNewItem("Socket连接成功");
+		outputConsole.printNewItem("Socket连接...成功");
 		return true;
 	}
 
@@ -317,6 +328,39 @@ public class MainActivity extends ActionBarActivity {
 		return true;
 	}
 
+	private boolean devShakeHand()
+	{
+		if (btSocketIn == null || btSocketOut == null) {
+			Log.d(TAG, "Bluetooth socket is null");
+			return false;
+		}
+
+		int byteRead = -1;
+		outputConsole.printNewItem("正在进行设备握手...");
+		try {
+			btSocketOut.write(0x69);
+			// will blocked
+			// Why this toast will not show?
+			MyApp.showSimpleToast("等待设备回应");
+			byteRead = btSocketIn.read();
+		} catch (IOException e) {
+			Log.e(TAG, "socket error when shaking hand");
+			outputConsole.append("失败！（通信出错）");
+			e.printStackTrace();
+			return false;
+		}
+
+		if (byteRead == 0x96) {
+			Log.i(TAG, "Device shake hand successful");
+			outputConsole.append("成功");
+			return true;
+		} else {
+			Log.e(TAG, "Device respond is error when shaking hand");
+			outputConsole.append("失败！（设备未正确回应）");
+			return false;
+		}
+
+	}
 	private final String TAG = "MainActivity";
 	private final UUID BlueToothSSPUUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
 
