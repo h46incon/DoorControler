@@ -234,29 +234,29 @@ public class MainActivity extends ActionBarActivity {
 					String.format("正在尝试连接蓝牙设备: %s (%s)", device.getName(), device.getAddress()));
 
 			outputConsole.indent();
-			if (connectBTSSPSocket(device) == false) {
-				return;
-			}
-
-			if (getSocketStream() == false) {
-				return;
-			}
-
-			if (devShakeHand()) {
-				stateManager.changeState(State.OPEN_DOOR);
-			} else {
-				// clean
-				try {
-					btSocketIn.close();
-					btSocketOut.close();
-					btSocket.close();
-				} catch (IOException e) {
-					e.printStackTrace();
+			// Shame... I need RAII
+			if (connectBTSSPSocket(device)) {
+				if (getSocketStream()) {
+					if (devShakeHand()) {
+						stateManager.changeState(State.OPEN_DOOR);
+						outputConsole.unIndent();
+						outputConsole.printNewItem("连接设备成功");
+						return;
+					} else {
+						// clean
+						try {
+							btSocketIn.close();
+							btSocketOut.close();
+							btSocket.close();
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
+					}
 				}
 			}
 
 			outputConsole.unIndent();
-			outputConsole.printNewItem("设备连接成功");
+			outputConsole.printNewItem("连接设备失败");
 
 		}
 	};
