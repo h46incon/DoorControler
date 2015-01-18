@@ -177,7 +177,6 @@ public class MainActivity extends ActionBarActivity {
 		};
 		stateManager = new StateManager(onBTClick, State.BT_SETTING);
 
-		Log.d(TAG, "current bt state: " + btAdapter.getState());
 	}
 
 	private void initExitingWithTurnOffBTDialog()
@@ -212,10 +211,6 @@ public class MainActivity extends ActionBarActivity {
 
 	private void connectBTDev()
 	{
-		if (!btAdapter.isEnabled()) {
-			btAdapter.enable();
-		}
-
 		BTDiscoveryDialog btDiscoveryDialog = new BTDiscoveryDialog();
 		btDiscoveryDialog.setOnDevSelectListener(onBTDevSelectedListener);
 		btDiscoveryDialog.show(getFragmentManager(), "btDiscoveryDialog");

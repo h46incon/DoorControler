@@ -40,13 +40,13 @@ public class BTDiscoveryDialog extends DialogFragment{
 	private DeviceAdapter deviceAdapter;
 	private OnDevSelect mListener = null;
 	private BluetoothAdapter btAdapter;
+	private boolean isRunning = false;
 
 
 	public void setOnDevSelectListener(OnDevSelect mListener)
 	{
 		this.mListener = mListener;
 	}
-
 
 	// Create a BroadcastReceiver for ACTION_FOUND
 	private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
@@ -63,8 +63,6 @@ public class BTDiscoveryDialog extends DialogFragment{
 		}
 	};
 
-	// Override the Fragment.onAttach() method to instantiate the
-	// FontPickerDialogListener
 	@Override
 	public void onAttach(Activity activity) {
 		super.onAttach(activity);
@@ -74,6 +72,7 @@ public class BTDiscoveryDialog extends DialogFragment{
 	@Override
 	public void onDestroy()
 	{
+		isRunning = false;
 		if (btAdapter != null) {
 			Log.i(TAG, "cancel bluetooth discovery");
 			btAdapter.cancelDiscovery();
@@ -87,10 +86,43 @@ public class BTDiscoveryDialog extends DialogFragment{
 	@Override
 	public void onStart()
 	{
+		isRunning = true;
 		super.onStart();
-		Log.v(TAG, "start bluetooth discovery");
-		btAdapter.startDiscovery();
-		MyApp.showSimpleToast("正在搜索蓝牙设备");
+
+		Log.d(TAG, "start bluetooth discovery");
+		Log.d(TAG, "Current BT state: " + btAdapter.getState());
+
+		if (btAdapter.isEnabled()) {
+			// If bluetooth is enable, we can start discovery directly;
+			MyApp.showSimpleToast("正在搜索蓝牙设备");
+			btAdapter.startDiscovery();
+		} else {
+			btAdapter.enable();
+			Log.d(TAG, "Bluetooth enabled");
+			Log.d(TAG, "Current BT state: " + btAdapter.getState());
+
+			// Need add a delay after enable bluetooth.
+			final android.os.Handler handler = new android.os.Handler();
+			final int delayedMS = 500;
+			final Runnable startDis = new Runnable() {
+				@Override
+				public void run()
+				{
+					if (!isRunning) {
+						return;
+					}
+					if (btAdapter.getState() == BluetoothAdapter.STATE_ON) {
+						Log.d(TAG, "delayed discovery start");
+						btAdapter.startDiscovery();
+					} else {
+						Log.d(TAG, "The BlueTooth has not turned on, delayed discovery again");
+						handler.postDelayed(this, delayedMS);
+					}
+				}
+			};
+			handler.postDelayed(startDis, delayedMS);
+		}
+
 	}
 
 	@Override
@@ -117,7 +149,7 @@ public class BTDiscoveryDialog extends DialogFragment{
 			public void onClick(DialogInterface arg0, int arg1)
 			{
 				int magicNumber = arg1;
-				BluetoothDevice selectedDev = btDevices.get(arg1);
+				BluetoothDevice selectedDev = btDevices.get(magicNumber);
 				// TODO: connect?
 				if (mListener != null) {
 					mListener.onDevSelect(selectedDev);
@@ -154,16 +186,10 @@ public class BTDiscoveryDialog extends DialogFragment{
 
 		// Register the BroadcastReceiver
 		IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
-		mContext.registerReceiver(mReceiver, filter); // Don't forget to unregister during onDestroy
+		mContext.registerReceiver(mReceiver, filter);
 		return dialog;
 	}
 
-
-	/**
-	 * Create an adapter to show the fonts in the dialog.
-	 * Each font will be a text view with the text being the
-	 * font name, written in the style of the font
-	 */
 	private class DeviceAdapter extends BaseAdapter {
 		// view's style
 		private final float paddingDP = 20;     // Left and right padding in a view
@@ -212,7 +238,6 @@ public class BTDiscoveryDialog extends DialogFragment{
 
 			BluetoothDevice device = btDevices.get(position);
 			String textToShow = device.getName();
-//			String textToShow = String.format("%02d. %s", position, fontName);
 			view.setText(textToShow);
 
 			// Set style
