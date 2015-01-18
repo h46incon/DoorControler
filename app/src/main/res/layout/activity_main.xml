@@ -33,12 +33,13 @@
     <ImageView
         android:layout_width="@dimen/arrow_width"
         android:layout_height="@dimen/arrow_height"
-        android:id="@+id/btSetting_arrow_iv"
+        android:id="@+id/btConnect_arrow_iv"
         android:scaleType="fitXY"
         android:src="@drawable/arrow_default"
         android:layout_alignParentTop="true"
         android:layout_toLeftOf="@id/__viewMiddleInvisible"
         android:layout_toStartOf="@id/__viewMiddleInvisible"
+        android:layout_marginTop="@dimen/ui_marginTop"
         android:layout_marginRight="@dimen/arrow_right_margin"
         android:layout_marginEnd="@dimen/arrow_right_margin"
         />
@@ -46,10 +47,10 @@
     <Button
         android:layout_width="@dimen/btn_width"
         android:layout_height="@dimen/btn_height"
-        android:text="连接蓝牙"
-        android:id="@+id/btsetting_btn"
+        android:text="连接设备"
+        android:id="@+id/btConnect_btn"
         android:background="@drawable/btn_custom"
-        android:layout_below="@id/btSetting_arrow_iv"
+        android:layout_below="@id/btConnect_arrow_iv"
         android:layout_toLeftOf="@id/__viewMiddleInvisible"
         android:layout_toStartOf="@id/__viewMiddleInvisible"
         android:layout_marginTop="@dimen/btn_arrow_padding"
@@ -60,50 +61,9 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="蓝牙未连接"
+        android:text="设备未连接"
         android:id="@+id/btInfo_tv"
-        android:layout_alignBaseline="@id/btsetting_btn"
-        android:layout_toRightOf="@id/__viewMiddleInvisible"
-        android:layout_toEndOf="@id/__viewMiddleInvisible"
-        android:layout_marginLeft="@dimen/tv_left_margin_to_btn"
-        android:layout_marginStart="@dimen/tv_left_margin_to_btn"
-        />
-
-    <ImageView
-        android:layout_width="@dimen/arrow_width"
-        android:layout_height="@dimen/arrow_height"
-        android:id="@+id/devShakeHand_arrow_iv"
-        android:scaleType="fitXY"
-        android:src="@drawable/arrow_default"
-        android:layout_below="@id/btSetting_arrow_iv"
-        android:layout_toLeftOf="@id/__viewMiddleInvisible"
-        android:layout_toStartOf="@id/__viewMiddleInvisible"
-        android:layout_marginRight="@dimen/arrow_right_margin"
-        android:layout_marginEnd="@dimen/arrow_right_margin"
-        android:layout_marginTop="@dimen/arrows_padding"
-        />
-
-
-    <Button
-        android:layout_width="@dimen/btn_width"
-        android:layout_height="@dimen/btn_height"
-        android:text="设备验证"
-        android:id="@+id/devShakeHand_btn"
-        android:background="@drawable/btn_custom"
-        android:layout_below="@id/devShakeHand_arrow_iv"
-        android:layout_toLeftOf="@id/__viewMiddleInvisible"
-        android:layout_toStartOf="@id/__viewMiddleInvisible"
-        android:layout_marginTop="@dimen/btn_arrow_padding"
-        android:layout_marginRight="@dimen/btn_left_margin"
-        android:layout_marginEnd="@dimen/btn_left_margin"
-        />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="设备未验证"
-        android:id="@+id/devShakeHandInfo_tv"
-        android:layout_alignBaseline="@id/devShakeHand_btn"
+        android:layout_alignBaseline="@id/btConnect_btn"
         android:layout_toRightOf="@id/__viewMiddleInvisible"
         android:layout_toEndOf="@id/__viewMiddleInvisible"
         android:layout_marginLeft="@dimen/tv_left_margin_to_btn"
@@ -116,7 +76,7 @@
         android:id="@+id/openDoor_arrow_iv"
         android:scaleType="fitXY"
         android:src="@drawable/arrow_default"
-        android:layout_below="@id/devShakeHand_arrow_iv"
+        android:layout_below="@id/btConnect_arrow_iv"
         android:layout_toLeftOf="@id/__viewMiddleInvisible"
         android:layout_toStartOf="@id/__viewMiddleInvisible"
         android:layout_marginRight="@dimen/arrow_right_margin"
@@ -155,7 +115,7 @@
     <Button
         android:layout_width="@dimen/btn_width"
         android:layout_height="@dimen/btn_height"
-        android:text="闪人"
+        android:text="深藏功与名"
         android:id="@+id/exit_btn"
         android:background="@drawable/btn_custom"
         android:layout_below="@id/exit_arrow_iv"

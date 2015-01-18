@@ -24,7 +24,6 @@ public class MainActivity extends ActionBarActivity {
 
 	private static enum  State{
 		BT_SETTING,
-		DEV_SHAKEHAND,
 		OPEN_DOOR,
 		EXIT,
 
@@ -96,29 +95,24 @@ public class MainActivity extends ActionBarActivity {
 		private void initVar()
 		{
 			// get views
-			btSettingBtn = (Button) findViewById(R.id.btsetting_btn);
-			devShakehandBtn = (Button) findViewById(R.id.devShakeHand_btn);
+			btSettingBtn = (Button) findViewById(R.id.btConnect_btn);
 			openDoorBtn = (Button) findViewById(R.id.openDoor_btn);
 			exitBtn = (Button) findViewById(R.id.exit_btn);
 
-			btSettingArrowIV = (ImageView) findViewById(R.id.btSetting_arrow_iv);
-			devShakeHandArrowIV = (ImageView) findViewById(R.id.devShakeHand_arrow_iv);
+			btSettingArrowIV = (ImageView) findViewById(R.id.btConnect_arrow_iv);
 			openDoorArrowIV = (ImageView) findViewById(R.id.openDoor_arrow_iv);
 			exitArrowIV = (ImageView) findViewById(R.id.exit_arrow_iv);
 
 			btSettingInfoTV = (TextView) findViewById(R.id.btInfo_tv);
-			devShakeHandInfoTV = (TextView) findViewById(R.id.devShakeHandInfo_tv);
 
 			// store views into array
 			buttons = new Button[stateNum];
 			buttons[State.BT_SETTING.ordinal()] = btSettingBtn;
-			buttons[State.DEV_SHAKEHAND.ordinal()] = devShakehandBtn;
 			buttons[State.OPEN_DOOR.ordinal()] = openDoorBtn;
 			buttons[State.EXIT.ordinal()] = exitBtn;
 
 			imageViews = new ImageView[stateNum];
 			imageViews[State.BT_SETTING.ordinal()] = btSettingArrowIV;
-			imageViews[State.DEV_SHAKEHAND.ordinal()] = devShakeHandArrowIV;
 			imageViews[State.OPEN_DOOR.ordinal()] = openDoorArrowIV;
 			imageViews[State.EXIT.ordinal()] = exitArrowIV;
 
@@ -139,15 +133,12 @@ public class MainActivity extends ActionBarActivity {
 		private ImageView[] imageViews;
 		// Views
 		private Button btSettingBtn;
-		private Button devShakehandBtn;
 		private Button openDoorBtn;
 		private Button exitBtn;
 		private ImageView btSettingArrowIV;
-		private ImageView devShakeHandArrowIV;
 		private ImageView openDoorArrowIV;
 		private ImageView exitArrowIV;
 		private TextView btSettingInfoTV;
-		private TextView devShakeHandInfoTV;
 	}
 
 	@Override
@@ -190,10 +181,6 @@ public class MainActivity extends ActionBarActivity {
 		stateManager = new StateManager(onBTClick, State.BT_SETTING);
 
 		Log.d(TAG, "current bt state: " + btAdapter.getState());
-		if (btAdapter.getState() == BluetoothAdapter.STATE_CONNECTED) {
-			Log.d(TAG, "BT is connected");
-			stateManager.changeState(State.DEV_SHAKEHAND);
-		}
 	}
 
 	private void initExitingWithTurnOffBTDialog()
