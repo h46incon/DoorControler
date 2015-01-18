@@ -103,8 +103,6 @@ public class MainActivity extends ActionBarActivity {
 			openDoorArrowIV = (ImageView) findViewById(R.id.openDoor_arrow_iv);
 			exitArrowIV = (ImageView) findViewById(R.id.exit_arrow_iv);
 
-			btSettingInfoTV = (TextView) findViewById(R.id.btInfo_tv);
-
 			// store views into array
 			buttons = new Button[stateNum];
 			buttons[State.BT_SETTING.ordinal()] = btSettingBtn;
@@ -138,7 +136,6 @@ public class MainActivity extends ActionBarActivity {
 		private ImageView btSettingArrowIV;
 		private ImageView openDoorArrowIV;
 		private ImageView exitArrowIV;
-		private TextView btSettingInfoTV;
 	}
 
 	@Override

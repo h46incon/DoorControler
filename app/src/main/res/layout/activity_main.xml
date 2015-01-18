@@ -59,11 +59,10 @@
         />
 
     <TextView
-        android:visibility="invisible"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="设备未连接"
-        android:id="@+id/btInfo_tv"
+        android:text="此处应该有文案"
+        android:id="@+id/btStep_tv"
         android:layout_alignBaseline="@id/btConnect_btn"
         android:layout_toRightOf="@id/__viewMiddleInvisible"
         android:layout_toEndOf="@id/__viewMiddleInvisible"
@@ -99,6 +98,18 @@
         android:layout_marginEnd="@dimen/btn_left_margin"
         />
 
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="重温古老的传说"
+        android:id="@+id/openDoorStep_tv"
+        android:layout_alignBaseline="@id/openDoor_btn"
+        android:layout_toRightOf="@id/__viewMiddleInvisible"
+        android:layout_toEndOf="@id/__viewMiddleInvisible"
+        android:layout_marginLeft="@dimen/tv_left_margin_to_btn"
+        android:layout_marginStart="@dimen/tv_left_margin_to_btn"
+        />
+
     <ImageView
         android:layout_width="@dimen/arrow_width"
         android:layout_height="@dimen/arrow_height"
@@ -125,5 +136,17 @@
         android:layout_marginTop="@dimen/btn_arrow_padding"
         android:layout_marginRight="@dimen/btn_left_margin"
         android:layout_marginEnd="@dimen/btn_left_margin"
+        />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="随时都可以按它"
+        android:id="@+id/exitStep_tv"
+        android:layout_alignBaseline="@id/exit_btn"
+        android:layout_toRightOf="@id/__viewMiddleInvisible"
+        android:layout_toEndOf="@id/__viewMiddleInvisible"
+        android:layout_marginLeft="@dimen/tv_left_margin_to_btn"
+        android:layout_marginStart="@dimen/tv_left_margin_to_btn"
         />
 </RelativeLayout>
