@@ -128,6 +128,19 @@ public class BTDiscoveryDialog extends DialogFragment{
 		builder.setTitle("Select A Device");
 
 		// Add the buttons
+		// Todo: the postion of buttons is a question
+		// in 4.0+, OK button is right to Cancel button.
+		builder.setNeutralButton("重新扫描",
+				new OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int which)
+					{
+						btDevices.clear();
+						deviceAdapter.notifyDataSetChanged();
+						btAdapter.startDiscovery();
+					}
+				});
+
 		builder.setNegativeButton("取消",
 				new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog, int id)
