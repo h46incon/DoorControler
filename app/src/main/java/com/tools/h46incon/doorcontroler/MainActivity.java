@@ -3,6 +3,7 @@ package com.tools.h46incon.doorcontroler;
 import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothSocket;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
@@ -11,6 +12,11 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.UUID;
 
 
 public class MainActivity extends ActionBarActivity {
@@ -244,12 +250,95 @@ public class MainActivity extends ActionBarActivity {
 		public void onDevSelect(BluetoothDevice device)
 		{
 			Log.d(TAG, "received selected device " + device.getAddress());
+
+			if (connectBTSSPSocket(device) == false) {
+				return;
+			}
+
+			if (getSocketStream() == false) {
+				return;
+			}
+
+
 		}
 	};
 
+	private boolean connectBTSSPSocket(BluetoothDevice device)
+	{
+		// This state may block UI for a long time
+		// Show a toast
+		// TODO: why this toast is not appear?
+		MyApp.showSimpleToast("正在连接蓝牙设备");
+
+		// Try to create a SSP socket
+		try {
+			btSocket = device.createRfcommSocketToServiceRecord(BlueToothSSPUUID);
+		} catch (IOException e) {
+			btSocket = null;
+			Log.e(TAG, "Can not create BlueTooth socket!");
+			outputConsole.printNewItem("获取蓝牙串口Socket失败！");
+			e.printStackTrace();
+			return false;
+		}
+
+		Log.d(TAG, "Current BT state: " + btAdapter.getState());
+
+		// Try to connect this socket
+		try {
+			btSocket.connect();
+		} catch (IOException e) {
+			try {
+				btSocket.close();
+			} catch (IOException e1) {
+				e1.printStackTrace();
+			}
+			btSocket = null;
+			Log.e(TAG, "Can not connect BT socket!");
+			outputConsole.printNewItem("Socket连接失败！");
+			e.printStackTrace();
+			return false;
+		}
+
+		outputConsole.printNewItem("Socket连接成功");
+		return true;
+	}
+
+	private boolean getSocketStream()
+	{
+		// Check null~~
+		if (btSocket == null || !btSocket.isConnected()) {
+			btSocketIn = null;
+			btSocketOut = null;
+			Log.e(TAG, "Bluetooth socket is null or not connected");
+			return false;
+		}
+
+		outputConsole.printNewItem("获取Socket输入流...");
+		try {
+			btSocketIn = btSocket.getInputStream();
+			btSocketOut = btSocket.getOutputStream();
+		} catch (IOException e) {
+			btSocketIn = null;
+			btSocketOut = null;
+			outputConsole.append("失败!");
+			Log.e(TAG, "Cannot get bluetooth socket's input or output stream");
+			e.printStackTrace();
+			return false;
+		}
+		outputConsole.append("成功");
+
+		return true;
+	}
+
 	private final String TAG = "MainActivity";
-	private static final int REQUEST_ENABLE_BT = 0x67;
+	private final UUID BlueToothSSPUUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
+
 	private OutputConsole outputConsole;
+
+	private BluetoothSocket btSocket;
+	private InputStream btSocketIn;
+	private OutputStream btSocketOut;
+
 	private AlertDialog exitingWithTurnOffBTDialog;
 	private StateManager stateManager;
 	private BluetoothAdapter btAdapter;
