@@ -15,16 +15,35 @@ public class OutputConsole {
 
 	public void printNewItem(String str)
 	{
-		CharSequence oldText = consoleTV.getText();
-		consoleTV.setText(oldText + "\n" + str);
+		showingStr.append("\n");
+		for (int i = 0; i < indent; ++i) {
+			showingStr.append('\t');
+		}
+		showingStr.append(str);
+
+		consoleTV.setText(showingStr);
 	}
 
 	public void append(String str)
 	{
-		CharSequence oldText = consoleTV.getText();
-		consoleTV.setText(oldText + str);
+		showingStr.append(str);
+		consoleTV.setText(showingStr);
 	}
 
+	public void indent()
+	{
+		++indent;
+	}
+
+	public void unIndent()
+	{
+		if (indent > 0) {
+			--indent;
+		}
+	}
+
+	private StringBuilder showingStr = new StringBuilder();
 	private TextView consoleTV;
+	private int indent = 0;
 
 }

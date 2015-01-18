@@ -238,6 +238,7 @@ public class MainActivity extends ActionBarActivity {
 			outputConsole.printNewItem(
 					String.format("正在尝试连接蓝牙设备: %s (%s)", device.getName(), device.getAddress()));
 
+			outputConsole.indent();
 			if (connectBTSSPSocket(device) == false) {
 				return;
 			}
@@ -259,6 +260,7 @@ public class MainActivity extends ActionBarActivity {
 				}
 			}
 
+			outputConsole.unIndent();
 			outputConsole.printNewItem("设备连接成功");
 
 		}
