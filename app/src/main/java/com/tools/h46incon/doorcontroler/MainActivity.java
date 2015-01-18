@@ -168,8 +168,12 @@ public class MainActivity extends ActionBarActivity {
 					case BT_SETTING:
 						connectBTDev();
 						break;
+					case OPEN_DOOR:
+						openDoor();
+						break;
 					case EXIT:
 						exiting();
+						break;
 				}
 
 			}
@@ -258,6 +262,8 @@ public class MainActivity extends ActionBarActivity {
 				}
 			}
 
+			outputConsole.printNewItem("设备连接成功");
+
 		}
 	};
 
@@ -344,7 +350,6 @@ public class MainActivity extends ActionBarActivity {
 			MyApp.showSimpleToast("等待设备回应");
 			byteRead = btSocketIn.read();
 		} catch (IOException e) {
-			Log.e(TAG, "socket error when shaking hand");
 			outputConsole.append("失败！（通信出错）");
 			e.printStackTrace();
 			return false;
@@ -361,6 +366,39 @@ public class MainActivity extends ActionBarActivity {
 		}
 
 	}
+
+	private boolean openDoor()
+	{
+		outputConsole.printNewItem("正在发送开门指令...");
+
+		if (btSocketIn == null || btSocketOut == null) {
+			return false;
+		}
+
+		int byteRead = -1;
+		try {
+			btSocketOut.write(0x38);
+			// TODO
+			MyApp.showSimpleToast("指令已发送，等待回应");
+			byteRead = btSocketIn.read();
+		} catch (IOException e) {
+			outputConsole.append("失败！（通信出错）");
+			e.printStackTrace();
+			return false;
+		}
+
+		if (byteRead != 0x83) {
+			Log.e(TAG, "Key error when opening door");
+			outputConsole.append("失败！（密码错误？）");
+			return false;
+		} else {
+			Log.i(TAG, "Door open successful");
+			outputConsole.append("成功");
+			stateManager.changeState(State.EXIT);
+			return true;
+		}
+	}
+
 	private final String TAG = "MainActivity";
 	private final UUID BlueToothSSPUUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
 
