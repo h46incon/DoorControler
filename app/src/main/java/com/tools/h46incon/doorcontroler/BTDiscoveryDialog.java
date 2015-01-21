@@ -104,6 +104,8 @@ public class BTDiscoveryDialog extends DialogFragment{
 			// Need add a delay after enable bluetooth.
 			final android.os.Handler handler = new android.os.Handler();
 			final int delayedMS = 500;
+			final long startSearchTime = System.currentTimeMillis();
+			final long maxWaitTime = 5000;      // max time for wait bluetooth turn on
 			final Runnable startDis = new Runnable() {
 				@Override
 				public void run()
@@ -111,7 +113,10 @@ public class BTDiscoveryDialog extends DialogFragment{
 					if (!isRunning) {
 						return;
 					}
-					if (btAdapter.getState() == BluetoothAdapter.STATE_ON) {
+					if (startSearchTime + maxWaitTime < System.currentTimeMillis()) {
+						Log.d(TAG, "wait time out, try start discovery");
+						btAdapter.startDiscovery();
+					}else if (btAdapter.getState() == BluetoothAdapter.STATE_ON) {
 						Log.d(TAG, "delayed discovery start");
 						btAdapter.startDiscovery();
 					} else {
