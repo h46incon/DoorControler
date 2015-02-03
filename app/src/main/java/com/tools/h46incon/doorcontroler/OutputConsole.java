@@ -1,5 +1,6 @@
 package com.tools.h46incon.doorcontroler;
 
+import android.os.Handler;
 import android.text.method.ScrollingMovementMethod;
 import android.widget.TextView;
 
@@ -21,13 +22,13 @@ public class OutputConsole {
 		}
 		showingStr.append(str);
 
-		consoleTV.setText(showingStr);
+		this.showStr();
 	}
 
 	public void append(String str)
 	{
 		showingStr.append(str);
-		consoleTV.setText(showingStr);
+		this.showStr();
 	}
 
 	public void indent()
@@ -42,8 +43,23 @@ public class OutputConsole {
 		}
 	}
 
+	private void showStr()
+	{
+		mHandel.post(setTextRunner);
+	}
+
+	private Runnable setTextRunner = new Runnable() {
+		@Override
+		public void run()
+		{
+			consoleTV.setText(showingStr);
+		}
+	};
+
 	private StringBuilder showingStr = new StringBuilder();
 	private TextView consoleTV;
 	private int indent = 0;
+	private static Handler mHandel = new Handler(MyApp.getContext().getMainLooper());
+
 
 }
