@@ -20,8 +20,15 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class BGWorker {
 
+	public static enum WorkState{
+		SUCCESS,
+		EXCEPTION,
+		CANCEL,
+		TIME_OUT
+	}
+
 	public static interface OnWorkFinished{
-		public void onWorkFinished(boolean isSuccess, Object result);
+		public void onWorkFinished(WorkState state, Object result);
 	}
 
 
@@ -44,7 +51,7 @@ public class BGWorker {
 			@Override
 			public void onCancel(DialogInterface dialog)
 			{
-				CancelTask();
+				CancelTask(WorkState.CANCEL);
 			}
 		});
 	}
@@ -59,7 +66,7 @@ public class BGWorker {
 					@Override
 					public void run()
 					{
-						CancelTask();
+						CancelTask(WorkState.TIME_OUT);
 					}
 				}, timeOutMS
 		);
@@ -79,13 +86,13 @@ public class BGWorker {
 		return this;
 	}
 
-	private void CancelTask()
+	private void CancelTask(WorkState state)
 	{
 		if (isCallbackRunned.compareAndSet(false, true)) {
 			// Cancel it and run callback
 			Log.d(TAG, "Canceling task...");
 			taskFuture.cancel(true);
-			onWorkFinished.onWorkFinished(false, null);
+			onWorkFinished.onWorkFinished(state, null);
 		}
 		progressDialog.dismiss();
 	}
@@ -96,22 +103,23 @@ public class BGWorker {
 				public void run()
 				{
 
-					boolean hasSuccess = false;
+					WorkState state;
 					Object result = null;
 
 					try {
 						result = task.call();
-						hasSuccess = true;
+						state = WorkState.SUCCESS;
 					} catch (Exception e) {
+						state = WorkState.EXCEPTION;
 						e.printStackTrace();
-						Log.d(TAG, "background interrupted");
+						Log.d(TAG, "Ignored exception in background task");
 					}
 
 					progressDialog.dismiss();
 
 					// if complete
 					if (isCallbackRunned.compareAndSet(false, true)) {
-						onWorkFinished.onWorkFinished(hasSuccess, result);
+						onWorkFinished.onWorkFinished(state, result);
 					}
 				}
 			};

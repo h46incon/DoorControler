@@ -14,6 +14,7 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.tools.h46incon.doorcontroler.BGWorker.BGWorker;
 import com.tools.h46incon.doorcontroler.BGWorker.SerialBGWorker;
 
 import java.io.IOException;
@@ -288,10 +289,10 @@ public class MainActivity extends ActionBarActivity {
 		connectSocketTask.message = "正在建立连接...";
 		connectSocketTask.onPerWorkFinished = new SerialBGWorker.OnPerWorkFinished() {
 			@Override
-			public boolean onPerWorkFinished(boolean isSuccess, Object reslut)
+			public boolean onPerWorkFinished(BGWorker.WorkState state, Object reslut)
 			{
 				boolean needContinue = false;
-				if (isSuccess && (Boolean) reslut) {
+				if ((state == BGWorker.WorkState.SUCCESS) && (Boolean) reslut) {
 					needContinue = getSocketStream();
 				}
 				// This step will be finished in some millisecond
@@ -325,10 +326,10 @@ public class MainActivity extends ActionBarActivity {
 		};
 		devShakeTask.onPerWorkFinished = new SerialBGWorker.OnPerWorkFinished() {
 			@Override
-			public boolean onPerWorkFinished(boolean isSuccess, Object reslut)
+			public boolean onPerWorkFinished(BGWorker.WorkState state, Object reslut)
 			{
 				outputConsole.unIndent();
-				if (isSuccess && (Boolean) reslut) {
+				if ((state == BGWorker.WorkState.SUCCESS) && (Boolean) reslut) {
 					stateManager.changeState(State.OPEN_DOOR);
 					outputConsole.printNewItem("连接设备成功");
 					return true;

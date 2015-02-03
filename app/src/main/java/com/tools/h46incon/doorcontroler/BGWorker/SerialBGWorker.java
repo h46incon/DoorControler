@@ -15,7 +15,7 @@ public class SerialBGWorker {
 	private Context actContext;
 
 	public static interface OnPerWorkFinished{
-		public boolean onPerWorkFinished(boolean isSuccess, Object reslut);
+		public boolean onPerWorkFinished(BGWorker.WorkState state, Object reslut);
 
 	}
 
@@ -55,10 +55,10 @@ public class SerialBGWorker {
 			BGWorker bgWorker = new BGWorker(actContext, info.task,
 					new BGWorker.OnWorkFinished() {
 						@Override
-						public void onWorkFinished(boolean isSuccess, Object result)
+						public void onWorkFinished(BGWorker.WorkState state, Object result)
 						{
 							boolean needContinue =
-									info.onPerWorkFinished.onPerWorkFinished(isSuccess, result);
+									info.onPerWorkFinished.onPerWorkFinished(state, result);
 							if (needContinue) {
 								bgThreadHandler.post(nextTaskRunner);
 							}
