@@ -284,6 +284,8 @@ public class MainActivity extends ActionBarActivity {
 
 		outputConsole.indent();
 
+		final SerialBGWorker serialBGWorker = new SerialBGWorker(this);
+
 		// socket connect task
 		SerialBGWorker.taskInfo connectSocketTask = new SerialBGWorker.taskInfo();
 		connectSocketTask.message = "正在建立连接...";
@@ -312,11 +314,13 @@ public class MainActivity extends ActionBarActivity {
 				return connectBTSSPSocket(btDevice);
 			}
 		};
-		connectSocketTask.timeout = 10 * 1000;      // 10s
+		connectSocketTask.timeout = 30 * 1000;      // 10s
 
 		// Dev shake hand task
-		SerialBGWorker.taskInfo devShakeTask = new SerialBGWorker.taskInfo();
-		devShakeTask.message = "正在握手...";
+		final SerialBGWorker.taskInfo devShakeTask = new SerialBGWorker.taskInfo();
+		final int maxTryTimes = 5;         // try 5 times when failed
+		final String shakeHandMsgFormat = "正在尝试第(%d/%d)次握手...";
+		devShakeTask.message = String.format(shakeHandMsgFormat, 1, maxTryTimes);
 		devShakeTask.task = new Callable() {
 			@Override
 			public Object call() throws Exception
@@ -325,24 +329,45 @@ public class MainActivity extends ActionBarActivity {
 			}
 		};
 		devShakeTask.onPerWorkFinished = new SerialBGWorker.OnPerWorkFinished() {
+
+			int triedTimes = 0;
 			@Override
 			public boolean onPerWorkFinished(BGWorker.WorkState state, Object reslut)
 			{
-				outputConsole.unIndent();
-				if ((state == BGWorker.WorkState.SUCCESS) && (Boolean) reslut) {
-					stateManager.changeState(State.OPEN_DOOR);
-					outputConsole.printNewItem("连接设备成功");
-					return true;
-				} else {
-					outputConsole.printNewItem("连接设备失败");
-					return false;
+				++triedTimes;
+				switch (state) {
+					case SUCCESS:
+						if ((Boolean) reslut) {
+							outputConsole.unIndent();
+							stateManager.changeState(State.OPEN_DOOR);
+							outputConsole.printNewItem("连接设备成功");
+						}
+						return true;
+
+
+					case TIME_OUT:
+						if (triedTimes < maxTryTimes) {
+							// try again
+							devShakeTask.message = String.format(shakeHandMsgFormat, triedTimes+1, maxTryTimes);
+							serialBGWorker.addTaskInFirst(devShakeTask);
+							return true;
+						} else {
+						}
+					case CANCEL:
+					case EXCEPTION:
+						outputConsole.unIndent();
+						outputConsole.printNewItem("连接设备失败");
+						return false;
+
+					default:
+						Log.w(TAG, "Unhandled state in callback of device shake hand");
+						return true;
 				}
 			}
 		};
-		devShakeTask.timeout = 5 * 1000;
+		devShakeTask.timeout = 2 * 1000;
 
 
-		SerialBGWorker serialBGWorker = new SerialBGWorker(this);
 		serialBGWorker.addTask(connectSocketTask);
 		serialBGWorker.addTask(devShakeTask);
 		serialBGWorker.start();

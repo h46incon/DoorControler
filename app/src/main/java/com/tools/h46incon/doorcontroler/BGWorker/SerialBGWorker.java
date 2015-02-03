@@ -3,8 +3,8 @@ package com.tools.h46incon.doorcontroler.BGWorker;
 import android.content.Context;
 import android.os.Handler;
 
+import java.util.Deque;
 import java.util.LinkedList;
-import java.util.Queue;
 import java.util.concurrent.Callable;
 
 /**
@@ -33,9 +33,14 @@ public class SerialBGWorker {
 		this.bgThreadHandler = new Handler(actContext.getMainLooper());
 	}
 
-	public boolean addTask(taskInfo info)
+	public void addTask(taskInfo info)
 	{
-		return taskInfos.offer(info);
+		taskInfos.addLast(info);
+	}
+
+	public void addTaskInFirst(taskInfo info)
+	{
+		taskInfos.addFirst(info);
 	}
 
 	public boolean removeTask(taskInfo info)
@@ -79,6 +84,6 @@ public class SerialBGWorker {
 		}
 	};
 
-	private Queue<taskInfo> taskInfos = new LinkedList<>();
+	private Deque<taskInfo> taskInfos = new LinkedList<>();
 	private Handler bgThreadHandler;
 }
