@@ -273,6 +273,17 @@ public class MainActivity extends ActionBarActivity {
 		btSocketOut = null;
 	}
 
+	private void showWrongDeviceDialog()
+	{
+		AlertDialog.Builder builder = new AlertDialog.Builder(this);
+		builder .setTitle("握手失败")
+				.setIcon(android.R.drawable.ic_dialog_alert)
+				.setMessage("是否连错蓝牙？")
+				.setCancelable(true)
+				.setPositiveButton("确定", null)
+				.show();
+	}
+
 	// connected device
 	// It will finish bluetooth device connection and hand shaking work
 	private void connectDoorCtrlDevice(final BluetoothDevice btDevice)
@@ -334,6 +345,7 @@ public class MainActivity extends ActionBarActivity {
 			@Override
 			public boolean onPerWorkFinished(BGWorker.WorkState state, Object reslut)
 			{
+				boolean needContinue = false;
 				++triedTimes;
 				switch (state) {
 					case SUCCESS:
@@ -341,31 +353,50 @@ public class MainActivity extends ActionBarActivity {
 							outputConsole.unIndent();
 							stateManager.changeState(State.OPEN_DOOR);
 							outputConsole.printNewItem("连接设备成功");
+							needContinue = true;
+						} else {
+							showWrongDeviceDialog();
+							needContinue = false;
 						}
-						return true;
-
+						break;
 
 					case TIME_OUT:
 						if (triedTimes < maxTryTimes) {
 							// try again
 							devShakeTask.message = String.format(shakeHandMsgFormat, triedTimes+1, maxTryTimes);
 							serialBGWorker.addTaskInFirst(devShakeTask);
-							return true;
+							needContinue = true;
 						} else {
+							showWrongDeviceDialog();
+							needContinue = false;
 						}
-					case CANCEL:
+						break;
+
 					case EXCEPTION:
-						outputConsole.unIndent();
-						outputConsole.printNewItem("连接设备失败");
-						return false;
+						// TODO: showWrongDeviceDialog?
+						needContinue = false;
+						break;
+
+					case CANCEL:
+						needContinue = false;
+						break;
 
 					default:
 						Log.w(TAG, "Unhandled state in callback of device shake hand");
-						return true;
+						needContinue = true;
+						break;
+				}
+
+				if (needContinue) {
+					return true;
+				} else {
+					outputConsole.unIndent();
+					outputConsole.printNewItem("连接设备失败");
+					return false;
 				}
 			}
 		};
-		devShakeTask.timeout = 2 * 1000;
+		devShakeTask.timeout = 1 * 1000;
 
 
 		serialBGWorker.addTask(connectSocketTask);
