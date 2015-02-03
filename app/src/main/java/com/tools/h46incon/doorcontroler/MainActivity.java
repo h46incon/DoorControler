@@ -6,6 +6,7 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.content.DialogInterface;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.view.View;
@@ -13,10 +14,13 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.tools.h46incon.doorcontroler.BGWorker.SerialBGWorker;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.UUID;
+import java.util.concurrent.Callable;
 
 
 public class MainActivity extends ActionBarActivity {
@@ -212,9 +216,28 @@ public class MainActivity extends ActionBarActivity {
 	private void connectBTDev()
 	{
 		BTDiscoveryDialog btDiscoveryDialog = new BTDiscoveryDialog();
-		btDiscoveryDialog.setOnDevSelectListener(onBTDevSelectedListener);
+		btDiscoveryDialog.setOnDevSelectListener(
+				new BTDiscoveryDialog.OnDevSelect() {
+					@Override
+					public void onDevSelect(final BluetoothDevice device)
+					{
+						Log.d(TAG, "received selected device " + device.getAddress());
+						connectDoorCtrlDevice(device);
+//						// start device connection in next loop
+//						// to make dialog UI not blocking
+//						mHandler.postDelayed(new Runnable() {
+//							@Override
+//							public void run()
+//							{
+//								connectDoorCtrlDevice(device);
+//							}
+//						}, 20);
+					}
+				}
+		);
 		btDiscoveryDialog.show(getFragmentManager(), "btDiscoveryDialog");
 	}
+
 	private void exiting()
 	{
 		if (btAdapter.isEnabled()) {
@@ -224,51 +247,112 @@ public class MainActivity extends ActionBarActivity {
 		}
 	}
 
-	private BTDiscoveryDialog.OnDevSelect onBTDevSelectedListener = new BTDiscoveryDialog.OnDevSelect() {
-		@Override
-		public void onDevSelect(BluetoothDevice device)
-		{
-			Log.d(TAG, "received selected device " + device.getAddress());
+	private void btDisconnect()
+	{
+		try {
+			if (btSocketIn != null) {
+				btSocketIn.close();
+			}
+			if (btSocketOut != null) {
+				btSocketOut.close();
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		try {
+			if (btSocket != null) {
+				btSocket.close();
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 
-			outputConsole.printNewItem(
-					String.format("正在尝试连接蓝牙设备: %s (%s)", device.getName(), device.getAddress()));
+		btSocket = null;
+		btSocketIn = null;
+		btSocketOut = null;
+	}
 
-			outputConsole.indent();
-			// Shame... I need RAII
-			if (connectBTSSPSocket(device)) {
-				if (getSocketStream()) {
-					if (devShakeHand()) {
-						stateManager.changeState(State.OPEN_DOOR);
-						outputConsole.unIndent();
-						outputConsole.printNewItem("连接设备成功");
-						return;
-					} else {
-						// clean
-						try {
-							btSocketIn.close();
-							btSocketOut.close();
-							btSocket.close();
-						} catch (IOException e) {
-							e.printStackTrace();
-						}
-					}
+	// connected device
+	// It will finish bluetooth device connection and hand shaking work
+	private void connectDoorCtrlDevice(final BluetoothDevice btDevice)
+	{
+
+		outputConsole.printNewItem(
+				String.format("正在尝试连接蓝牙设备: %s (%s)", btDevice.getName(), btDevice.getAddress()));
+
+
+		outputConsole.indent();
+
+		// socket connect task
+		SerialBGWorker.taskInfo connectSocketTask = new SerialBGWorker.taskInfo();
+		connectSocketTask.message = "正在建立连接...";
+		connectSocketTask.onPerWorkFinished = new SerialBGWorker.OnPerWorkFinished() {
+			@Override
+			public boolean onPerWorkFinished(boolean isSuccess, Object reslut)
+			{
+				boolean needContinue = false;
+				if (isSuccess && (Boolean) reslut) {
+					needContinue = getSocketStream();
+				}
+				// This step will be finished in some millisecond
+				if (needContinue) {
+					return true;
+				} else {
+					outputConsole.unIndent();
+					outputConsole.printNewItem("连接设备失败");
+					return false;
 				}
 			}
+		};
+		connectSocketTask.task = new Callable() {
+			@Override
+			public Object call() throws Exception
+			{
+				return connectBTSSPSocket(btDevice);
+			}
+		};
+		connectSocketTask.timeout = 10 * 1000;      // 10s
 
-			outputConsole.unIndent();
-			outputConsole.printNewItem("连接设备失败");
+		// Dev shake hand task
+		SerialBGWorker.taskInfo devShakeTask = new SerialBGWorker.taskInfo();
+		devShakeTask.message = "正在握手...";
+		devShakeTask.task = new Callable() {
+			@Override
+			public Object call() throws Exception
+			{
+				return devShakeHand();
+			}
+		};
+		devShakeTask.onPerWorkFinished = new SerialBGWorker.OnPerWorkFinished() {
+			@Override
+			public boolean onPerWorkFinished(boolean isSuccess, Object reslut)
+			{
+				outputConsole.unIndent();
+				if (isSuccess && (Boolean) reslut) {
+					stateManager.changeState(State.OPEN_DOOR);
+					outputConsole.printNewItem("连接设备成功");
+					return true;
+				} else {
+					outputConsole.printNewItem("连接设备失败");
+					return false;
+				}
+			}
+		};
+		devShakeTask.timeout = 5 * 1000;
 
-		}
-	};
 
-	private boolean connectBTSSPSocket(BluetoothDevice device)
+		SerialBGWorker serialBGWorker = new SerialBGWorker(this);
+		serialBGWorker.addTask(connectSocketTask);
+		serialBGWorker.addTask(devShakeTask);
+		serialBGWorker.start();
+
+	}
+
+
+	private boolean connectBTSSPSocket(final BluetoothDevice device)
 	{
-		// This state may block UI for a long time
-		// Show a toast
-		// TODO: why this toast is not appear?
-		MyApp.showSimpleToast("正在连接蓝牙设备");
-
 		// Try to create a SSP socket
+		// This step will be finished in some millisecond
 		try {
 			btSocket = device.createRfcommSocketToServiceRecord(BlueToothSSPUUID);
 		} catch (IOException e) {
@@ -279,7 +363,6 @@ public class MainActivity extends ActionBarActivity {
 			return false;
 		}
 
-		Log.d(TAG, "Current BT state: " + btAdapter.getState());
 
 		// Try to connect this socket
 		try {
@@ -316,8 +399,7 @@ public class MainActivity extends ActionBarActivity {
 			btSocketIn = btSocket.getInputStream();
 			btSocketOut = btSocket.getOutputStream();
 		} catch (IOException e) {
-			btSocketIn = null;
-			btSocketOut = null;
+			btDisconnect();
 			outputConsole.append("失败!");
 			Log.e(TAG, "Cannot get bluetooth socket's input or output stream");
 			e.printStackTrace();
@@ -339,11 +421,9 @@ public class MainActivity extends ActionBarActivity {
 		outputConsole.printNewItem("正在进行设备握手...");
 		try {
 			btSocketOut.write(0x69);
-			// will blocked
-			// Why this toast will not show?
-			MyApp.showSimpleToast("等待设备回应");
 			byteRead = btSocketIn.read();
 		} catch (IOException e) {
+			btDisconnect();
 			outputConsole.append("失败！（通信出错）");
 			e.printStackTrace();
 			return false;
@@ -405,6 +485,7 @@ public class MainActivity extends ActionBarActivity {
 	private AlertDialog exitingWithTurnOffBTDialog;
 	private StateManager stateManager;
 	private BluetoothAdapter btAdapter;
+	private Handler mHandler = new Handler();
 
 
 }
