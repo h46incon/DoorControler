@@ -9,6 +9,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -25,7 +26,6 @@ import java.util.concurrent.Callable;
 
 
 public class MainActivity extends ActionBarActivity {
-
 
 	private static enum  State{
 		BT_SETTING,
@@ -151,6 +151,16 @@ public class MainActivity extends ActionBarActivity {
 
 		initMember();
 
+	}
+
+	@Override
+	public boolean onKeyDown(int keyCode, KeyEvent event)
+	{
+		if (keyCode == KeyEvent.KEYCODE_BACK) {
+			exiting();
+			return true;
+		}
+		return false;
 	}
 
 	private void initMember()
