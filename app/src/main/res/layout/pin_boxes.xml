@@ -5,18 +5,15 @@
              android:background="@drawable/pin_input_box_bg"
     >
     <TableRow>
+
+
         <View
             android:layout_width="@dimen/pin_box_size"
             android:layout_height="@dimen/pin_box_size"
             android:id="@+id/pin_box_1"
             />
 
-        <View
-            android:layout_width="1px"
-            android:layout_height="@dimen/pin_box_divider_height"
-            android:layout_marginTop="1dp"
-            android:background="#EFEFEF"
-            />
+        <include layout="@layout/pin_boxes_divider"/>
 
         <View
             android:layout_width="@dimen/pin_box_size"
@@ -24,12 +21,7 @@
             android:id="@+id/pin_box_2"
             />
 
-        <View
-            android:layout_width="1px"
-            android:layout_height="@dimen/pin_box_divider_height"
-            android:layout_marginTop="1dp"
-            android:background="#EFEFEF"
-            />
+        <include layout="@layout/pin_boxes_divider"/>
 
         <View
             android:layout_width="@dimen/pin_box_size"
@@ -37,12 +29,7 @@
             android:id="@+id/pin_box_3"
             />
 
-        <View
-            android:layout_width="1px"
-            android:layout_height="@dimen/pin_box_divider_height"
-            android:layout_marginTop="1dp"
-            android:background="#EFEFEF"
-            />
+        <include layout="@layout/pin_boxes_divider"/>
 
         <View
             android:layout_width="@dimen/pin_box_size"
@@ -50,12 +37,7 @@
             android:id="@+id/pin_box_4"
             />
 
-        <View
-            android:layout_width="1px"
-            android:layout_height="@dimen/pin_box_divider_height"
-            android:layout_marginTop="1dp"
-            android:background="#EFEFEF"
-            />
+        <include layout="@layout/pin_boxes_divider"/>
 
         <View
             android:layout_width="@dimen/pin_box_size"
@@ -63,12 +45,8 @@
             android:id="@+id/pin_box_5"
             />
 
-        <View
-            android:layout_width="1px"
-            android:layout_height="@dimen/pin_box_divider_height"
-            android:layout_marginTop="1dp"
-            android:background="#EFEFEF"
-            />
+        <include layout="@layout/pin_boxes_divider"/>
+
         <View
             android:layout_width="@dimen/pin_box_size"
             android:layout_height="@dimen/pin_box_size"
