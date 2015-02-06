@@ -65,7 +65,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
-        android:text="这是一个不想成为咸鱼的app"
+        android:text="这是一个有情怀的app"
         android:textColor="#353535"
         android:layout_below="@id/pin_box_title_divider"
         android:layout_marginTop="20dp"
@@ -93,9 +93,10 @@
         android:focusableInTouchMode="true"
         android:background="@drawable/keyboard_bg"
         android:keyBackground="@drawable/keyboard_btn"
-        android:keyTextColor="#000000"
+        android:keyTextColor="#353535"
         android:paddingTop="1px"
         android:paddingLeft="1px"
+        android:shadowRadius="1"
 
         />
 

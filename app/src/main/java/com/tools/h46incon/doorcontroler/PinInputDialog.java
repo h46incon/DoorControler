@@ -1,4 +1,4 @@
-package com.tools.h46incon.doorcontroler.PinInputDialog;
+package com.tools.h46incon.doorcontroler;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -9,11 +9,8 @@ import android.inputmethodservice.KeyboardView;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
-
-import com.tools.h46incon.doorcontroler.R;
 
 /**
  * Created by h46incon on 2015/2/4.
@@ -69,11 +66,54 @@ public class PinInputDialog extends DialogFragment{
 		Keyboard keyboard = new Keyboard(mContext, R.xml.digit_kb);
 		keyboardView.setKeyboard(keyboard);
 		keyboardView.setEnabled(true);
-		keyboardView.setOnTouchListener(new View.OnTouchListener() {
+		keyboardView.setPreviewEnabled(false);
+		keyboardView.setOnKeyboardActionListener(new KeyboardView.OnKeyboardActionListener() {
 			@Override
-			public boolean onTouch(View v, MotionEvent event)
+			public void onPress(int primaryCode)
 			{
-				return false;
+
+			}
+
+			@Override
+			public void onRelease(int primaryCode)
+			{
+
+			}
+
+			@Override
+			public void onKey(int primaryCode, int[] keyCodes)
+			{
+
+			}
+
+			@Override
+			public void onText(CharSequence text)
+			{
+
+			}
+
+			@Override
+			public void swipeLeft()
+			{
+
+			}
+
+			@Override
+			public void swipeRight()
+			{
+
+			}
+
+			@Override
+			public void swipeDown()
+			{
+
+			}
+
+			@Override
+			public void swipeUp()
+			{
+
 			}
 		});
 	}
