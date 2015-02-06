@@ -52,6 +52,15 @@
         android:id="@+id/pin_box_title_divider"
         />
 
+    <include layout="@layout/pin_boxes"
+             android:layout_width="wrap_content"
+             android:layout_height="wrap_content"
+             android:layout_centerHorizontal="true"
+             android:layout_below="@id/pin_box_title_divider"
+             android:layout_marginTop="50dp"
+             android:id="@+id/pin_boxes"
+        />
+
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -61,91 +70,6 @@
         android:layout_below="@id/pin_box_title_divider"
         android:layout_marginTop="20dp"
         />
-
-    <TableLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:background="@drawable/pin_input_box_bg"
-        android:layout_centerHorizontal="true"
-        android:layout_below="@id/pin_box_title_divider"
-        android:layout_marginTop="50dp"
-        android:id="@+id/pin_boxes"
-        >
-        <TableRow>
-            <View
-                android:layout_width="@dimen/pin_box_size"
-                android:layout_height="@dimen/pin_box_size"
-                android:id="@+id/pin_box_1"
-                />
-
-            <View
-                android:layout_width="1px"
-                android:layout_height="@dimen/pin_box_divider_height"
-                android:layout_marginTop="1dp"
-                android:background="#EFEFEF"
-                />
-
-            <View
-                android:layout_width="@dimen/pin_box_size"
-                android:layout_height="@dimen/pin_box_size"
-                android:id="@+id/pin_box_2"
-                />
-
-            <View
-                android:layout_width="1px"
-                android:layout_height="@dimen/pin_box_divider_height"
-                android:layout_marginTop="1dp"
-                android:background="#EFEFEF"
-                />
-
-            <View
-                android:layout_width="@dimen/pin_box_size"
-                android:layout_height="@dimen/pin_box_size"
-                android:id="@+id/pin_box_3"
-                />
-
-            <View
-                android:layout_width="1px"
-                android:layout_height="@dimen/pin_box_divider_height"
-                android:layout_marginTop="1dp"
-                android:background="#EFEFEF"
-                />
-
-            <View
-                android:layout_width="@dimen/pin_box_size"
-                android:layout_height="@dimen/pin_box_size"
-                android:id="@+id/pin_box_4"
-                />
-
-            <View
-                android:layout_width="1px"
-                android:layout_height="@dimen/pin_box_divider_height"
-                android:layout_marginTop="1dp"
-                android:background="#EFEFEF"
-                />
-
-            <View
-                android:layout_width="@dimen/pin_box_size"
-                android:layout_height="@dimen/pin_box_size"
-                android:id="@+id/pin_box_5"
-                />
-
-            <View
-                android:layout_width="1px"
-                android:layout_height="@dimen/pin_box_divider_height"
-                android:layout_marginTop="1dp"
-                android:background="#EFEFEF"
-                />
-            <View
-                android:layout_width="@dimen/pin_box_size"
-                android:layout_height="@dimen/pin_box_size"
-                android:id="@+id/pin_box_6"
-                />
-
-        </TableRow>
-
-        </TableLayout>
-
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
