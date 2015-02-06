@@ -4,9 +4,12 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.DialogFragment;
 import android.content.Context;
+import android.inputmethodservice.Keyboard;
+import android.inputmethodservice.KeyboardView;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 
@@ -35,6 +38,10 @@ public class PinInputDialog extends DialogFragment{
 		// Get the AlertDialog from create()
 		LayoutInflater inflater = getActivity().getLayoutInflater();
 		View view = inflater.inflate(R.layout.dialog_pin_input, null);
+
+		keyboardView = (KeyboardView) view.findViewById(R.id.pin_box_keyboard);
+		initKeyboard();
+
 		final AlertDialog dialog = builder.setView(view).create();
 		return dialog;
 	}
@@ -49,13 +56,29 @@ public class PinInputDialog extends DialogFragment{
 		if (dialog != null) {
 			WindowManager.LayoutParams lp = new WindowManager.LayoutParams();
 			lp.copyFrom(dialog.getWindow().getAttributes());
-			lp.width = WindowManager.LayoutParams.MATCH_PARENT;
+			lp.width = getResources().getDimensionPixelSize(R.dimen.pin_input_dialog_width);
+//			lp.width = WindowManager.LayoutParams.MATCH_PARENT;
 			// when set height to MATCH_PARENT, the box is just align to the top
 			dialog.getWindow().setAttributes(lp);
 		}
 
 	}
 
+	private void initKeyboard()
+	{
+		Keyboard keyboard = new Keyboard(mContext, R.xml.digit_kb);
+		keyboardView.setKeyboard(keyboard);
+		keyboardView.setEnabled(true);
+		keyboardView.setOnTouchListener(new View.OnTouchListener() {
+			@Override
+			public boolean onTouch(View v, MotionEvent event)
+			{
+				return false;
+			}
+		});
+	}
+
 	private static final String TAG = "PinInputDialog";
 	private Context mContext;
+	private KeyboardView keyboardView;
 }

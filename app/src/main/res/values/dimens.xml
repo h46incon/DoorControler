@@ -16,4 +16,5 @@
     <dimen name="pin_box_size">45dp</dimen>
     <dimen name="pin_box_divider_height">43dp</dimen>
     <dimen name="pin_box_icon_size">40dp</dimen>
+    <dimen name="pin_input_dialog_width">350dp</dimen>
 </resources>
