@@ -4,6 +4,7 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.DialogFragment;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.inputmethodservice.Keyboard;
 import android.inputmethodservice.KeyboardView;
 import android.os.Bundle;
@@ -32,7 +33,6 @@ public class PinInputDialog extends DialogFragment {
 		// get context
 		mContext = getActivity();
 
-		// Not need to add bonded device because they will be found again.
 
 		// Instantiate an AlertDialog.Builder with its constructor
 		AlertDialog.Builder builder = new AlertDialog.Builder(
@@ -48,7 +48,30 @@ public class PinInputDialog extends DialogFragment {
 		initKeyboard();
 
 		final AlertDialog dialog = builder.setView(view).create();
+
+		// cancel setting
+		dialog.setCancelable(true);
+		dialog.setCanceledOnTouchOutside(false);
+		View cancel_btn = view.findViewById(R.id.pin_box_close_btn);
+		cancel_btn.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v)
+			{
+				PinInputDialog.this.dismiss();
+			}
+		});
+
 		return dialog;
+	}
+
+	@Override
+	public void onDismiss(DialogInterface dialog)
+	{
+		super.onDismiss(dialog);
+		// Check if this cancel is cause by a successful input
+		if (!hasSuccess) {
+			this.inputFinish(false);
+		}
 	}
 
 	@Override
@@ -146,7 +169,6 @@ public class PinInputDialog extends DialogFragment {
 			}
 		}
 
-		this.dismiss();
 	}
 
 	private void onKeyInput(int primaryCode)
@@ -168,6 +190,8 @@ public class PinInputDialog extends DialogFragment {
 				// TODO: UI
 				if (pins_index == pinNum) {
 					inputFinish(true);
+					hasSuccess = true;
+					this.dismiss();
 				}
 			} else {
 				Log.w(TAG, "Illegal pin, code: " + primaryCode);
@@ -183,6 +207,11 @@ public class PinInputDialog extends DialogFragment {
 	private Context mContext;
 	private KeyboardView keyboardView;
 	private OnPinInputFinish onPinInputFinish = null;
+
+	// has input success
+	private boolean hasSuccess = false;
+
+	// inputted pins
 	private char[] pins = new char[pinNum];
 	private int pins_index = 0;
 

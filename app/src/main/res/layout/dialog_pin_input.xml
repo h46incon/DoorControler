@@ -41,6 +41,7 @@
         android:layout_marginRight="30dp"
         android:scaleType="fitXY"
         android:src="@drawable/ic_close"
+        android:id="@+id/pin_box_close_btn"
         />
 
     <View
