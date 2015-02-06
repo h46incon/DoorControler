@@ -15,7 +15,16 @@ import android.view.WindowManager;
 /**
  * Created by h46incon on 2015/2/4.
  */
-public class PinInputDialog extends DialogFragment{
+public class PinInputDialog extends DialogFragment {
+	public static interface OnPinInputFinish {
+		public void onFinish(boolean isSuccess, char[] input);
+	}
+
+	public void setOnPinInputFinish(OnPinInputFinish onPinInputFinish)
+	{
+		this.onPinInputFinish = onPinInputFinish;
+	}
+
 	@Override
 	public Dialog onCreateDialog(Bundle savedInstanceState)
 	{
@@ -29,7 +38,6 @@ public class PinInputDialog extends DialogFragment{
 		AlertDialog.Builder builder = new AlertDialog.Builder(
 				getActivity(),
 				R.style.LightDialog);
-
 
 
 		// Get the AlertDialog from create()
@@ -83,7 +91,7 @@ public class PinInputDialog extends DialogFragment{
 			@Override
 			public void onKey(int primaryCode, int[] keyCodes)
 			{
-
+				onKeyInput(primaryCode);
 			}
 
 			@Override
@@ -118,7 +126,64 @@ public class PinInputDialog extends DialogFragment{
 		});
 	}
 
+	private void inputFinish(boolean isSuccess)
+	{
+		if (isSuccess) {
+			// Check if input enough pins
+			if (pins_index == pinNum) {
+				// Check null
+				if (onPinInputFinish != null) {
+					onPinInputFinish.onFinish(true, pins);
+				}
+
+			} else {
+				Log.e(TAG, "Not enough pin inputted, bits: " + pins_index);
+			}
+		} else {
+			// Check null
+			if (onPinInputFinish != null) {
+				onPinInputFinish.onFinish(false, null);
+			}
+		}
+
+		this.dismiss();
+	}
+
+	private void onKeyInput(int primaryCode)
+	{
+		if (primaryCode == Keyboard.KEYCODE_DELETE) {   // Delete
+			if (pins_index > 0) {
+				// reset unneeded char
+				pins[pins_index] = 0;
+				--pins_index;
+				// TODO: UI
+			}
+		} else if (primaryCode == 4869) {       // Hidden egg
+			// TODO: Hidden egg
+		} else {
+			// legal input is ASCII code
+			if (primaryCode >= 0 && primaryCode <= 127) {
+				pins[pins_index] = (char) primaryCode;
+				++pins_index;
+				// TODO: UI
+				if (pins_index == pinNum) {
+					inputFinish(true);
+				}
+			} else {
+				Log.w(TAG, "Illegal pin, code: " + primaryCode);
+			}
+		}
+
+
+	}
+
 	private static final String TAG = "PinInputDialog";
+	private static final int pinNum = 6;
+
 	private Context mContext;
 	private KeyboardView keyboardView;
+	private OnPinInputFinish onPinInputFinish = null;
+	private char[] pins = new char[pinNum];
+	private int pins_index = 0;
+
 }
