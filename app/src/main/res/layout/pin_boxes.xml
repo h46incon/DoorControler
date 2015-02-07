@@ -6,52 +6,28 @@
     >
     <TableRow>
 
-
-        <View
-            android:layout_width="@dimen/pin_box_size"
-            android:layout_height="@dimen/pin_box_size"
-            android:id="@+id/pin_box_1"
-            />
+        <include layout="@layout/pin_boxes_box"
+                 android:id="@+id/pin_box_layout_1" />
 
         <include layout="@layout/pin_boxes_divider"/>
-
-        <View
-            android:layout_width="@dimen/pin_box_size"
-            android:layout_height="@dimen/pin_box_size"
-            android:id="@+id/pin_box_2"
-            />
+        <include layout="@layout/pin_boxes_box"
+                 android:id="@+id/pin_box_layout_2" />
 
         <include layout="@layout/pin_boxes_divider"/>
-
-        <View
-            android:layout_width="@dimen/pin_box_size"
-            android:layout_height="@dimen/pin_box_size"
-            android:id="@+id/pin_box_3"
-            />
+        <include layout="@layout/pin_boxes_box"
+                 android:id="@+id/pin_box_layout_3" />
 
         <include layout="@layout/pin_boxes_divider"/>
-
-        <View
-            android:layout_width="@dimen/pin_box_size"
-            android:layout_height="@dimen/pin_box_size"
-            android:id="@+id/pin_box_4"
-            />
+        <include layout="@layout/pin_boxes_box"
+                 android:id="@+id/pin_box_layout_4" />
 
         <include layout="@layout/pin_boxes_divider"/>
-
-        <View
-            android:layout_width="@dimen/pin_box_size"
-            android:layout_height="@dimen/pin_box_size"
-            android:id="@+id/pin_box_5"
-            />
+        <include layout="@layout/pin_boxes_box"
+                 android:id="@+id/pin_box_layout_5" />
 
         <include layout="@layout/pin_boxes_divider"/>
-
-        <View
-            android:layout_width="@dimen/pin_box_size"
-            android:layout_height="@dimen/pin_box_size"
-            android:id="@+id/pin_box_6"
-            />
+        <include layout="@layout/pin_boxes_box"
+                 android:id="@+id/pin_box_layout_6" />
 
     </TableRow>
 

@@ -13,6 +13,7 @@ import android.os.Vibrator;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowManager;
 
 /**
@@ -51,17 +52,19 @@ public class PinInputDialog extends DialogFragment {
 
 		// Get the AlertDialog from create()
 		LayoutInflater inflater = getActivity().getLayoutInflater();
-		View view = inflater.inflate(R.layout.dialog_pin_input, null);
+		View rootView = inflater.inflate(R.layout.dialog_pin_input, null);
 
-		keyboardView = (KeyboardView) view.findViewById(R.id.pin_box_keyboard);
+		keyboardView = (KeyboardView) rootView.findViewById(R.id.pin_box_keyboard);
 		initKeyboard();
+		initPinBoxViews(rootView);
 
-		final AlertDialog dialog = builder.setView(view).create();
+		final AlertDialog dialog = builder.setView(rootView).create();
+
 
 		// cancel setting
 		dialog.setCancelable(true);
 		dialog.setCanceledOnTouchOutside(false);
-		View cancel_btn = view.findViewById(R.id.pin_box_close_btn);
+		View cancel_btn = rootView.findViewById(R.id.pin_box_close_btn);
 		cancel_btn.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v)
@@ -229,6 +232,33 @@ public class PinInputDialog extends DialogFragment {
 
 	}
 
+	private void initPinBoxViews(View dialogRootView)
+	{
+		ViewGroup pin_boxes = (ViewGroup) dialogRootView.findViewById(R.id.pin_boxes);
+
+		ViewGroup pin_box_layout;
+
+		int i = 0;
+		pin_box_layout = (ViewGroup) pin_boxes.findViewById(R.id.pin_box_layout_1);
+		pinBoxViews[i++] = pin_box_layout.findViewById(R.id.pin_box);
+
+		pin_box_layout = (ViewGroup) pin_boxes.findViewById(R.id.pin_box_layout_2);
+		pinBoxViews[i++] = pin_box_layout.findViewById(R.id.pin_box);
+
+		pin_box_layout = (ViewGroup) pin_boxes.findViewById(R.id.pin_box_layout_3);
+		pinBoxViews[i++] = pin_box_layout.findViewById(R.id.pin_box);
+
+		pin_box_layout = (ViewGroup) pin_boxes.findViewById(R.id.pin_box_layout_4);
+		pinBoxViews[i++] = pin_box_layout.findViewById(R.id.pin_box);
+
+		pin_box_layout = (ViewGroup) pin_boxes.findViewById(R.id.pin_box_layout_5);
+		pinBoxViews[i++] = pin_box_layout.findViewById(R.id.pin_box);
+
+		pin_box_layout = (ViewGroup) pin_boxes.findViewById(R.id.pin_box_layout_6);
+		pinBoxViews[i++] = pin_box_layout.findViewById(R.id.pin_box);
+
+	}
+
 	private static final String TAG = "PinInputDialog";
 	private static final int pinNum = 6;
 	private static boolean shouldVibrate;
@@ -244,5 +274,6 @@ public class PinInputDialog extends DialogFragment {
 	// inputted pins
 	private char[] pins = new char[pinNum];
 	private int pins_index = 0;
+	private View[] pinBoxViews = new View[pinNum];
 
 }
