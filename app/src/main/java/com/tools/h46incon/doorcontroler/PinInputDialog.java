@@ -5,6 +5,7 @@ import android.app.Dialog;
 import android.app.DialogFragment;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.graphics.Color;
 import android.inputmethodservice.Keyboard;
 import android.inputmethodservice.KeyboardView;
 import android.media.AudioManager;
@@ -119,12 +120,12 @@ public class PinInputDialog extends DialogFragment {
 
 			// High light
 			for (int i = highLightedNum; i < num; ++i) {
-				// TODO
+				pinBoxViews[i].setBackgroundResource(R.drawable.pin_input_bullet);
 			}
 
 			// Un high light
 			for (int i = num; i < highLightedNum; i++) {
-				// TODO
+				pinBoxViews[i].setBackgroundColor(Color.TRANSPARENT);
 			}
 
 			highLightedNum = num;
