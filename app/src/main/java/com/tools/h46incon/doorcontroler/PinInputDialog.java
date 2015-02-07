@@ -54,9 +54,9 @@ public class PinInputDialog extends DialogFragment {
 		LayoutInflater inflater = getActivity().getLayoutInflater();
 		View rootView = inflater.inflate(R.layout.dialog_pin_input, null);
 
+		pinBoxHighLighter = new PinBoxHighLighter(rootView);
 		keyboardView = (KeyboardView) rootView.findViewById(R.id.pin_box_keyboard);
 		initKeyboard();
-		initPinBoxViews(rootView);
 
 		final AlertDialog dialog = builder.setView(rootView).create();
 
@@ -102,6 +102,62 @@ public class PinInputDialog extends DialogFragment {
 			dialog.getWindow().setAttributes(lp);
 		}
 
+	}
+
+	private static class PinBoxHighLighter{
+		public PinBoxHighLighter(View dialogRootView)
+		{
+			initPinBoxViews(dialogRootView);
+		}
+
+		public void setHighLightedNum(int num)
+		{
+			if (num < 0 || num > pinNum) {
+				Log.e(TAG, "Wrong pin box high lighted number: " + num);
+				return;
+			}
+
+			// High light
+			for (int i = highLightedNum; i < num; ++i) {
+				// TODO
+			}
+
+			// Un high light
+			for (int i = num; i < highLightedNum; i++) {
+				// TODO
+			}
+
+			highLightedNum = num;
+		}
+
+		private void initPinBoxViews(View dialogRootView)
+		{
+			ViewGroup pin_boxes = (ViewGroup) dialogRootView.findViewById(R.id.pin_boxes);
+
+			ViewGroup pin_box_layout;
+
+			int i = 0;
+			pin_box_layout = (ViewGroup) pin_boxes.findViewById(R.id.pin_box_layout_1);
+			pinBoxViews[i++] = pin_box_layout.findViewById(R.id.pin_box);
+
+			pin_box_layout = (ViewGroup) pin_boxes.findViewById(R.id.pin_box_layout_2);
+			pinBoxViews[i++] = pin_box_layout.findViewById(R.id.pin_box);
+
+			pin_box_layout = (ViewGroup) pin_boxes.findViewById(R.id.pin_box_layout_3);
+			pinBoxViews[i++] = pin_box_layout.findViewById(R.id.pin_box);
+
+			pin_box_layout = (ViewGroup) pin_boxes.findViewById(R.id.pin_box_layout_4);
+			pinBoxViews[i++] = pin_box_layout.findViewById(R.id.pin_box);
+
+			pin_box_layout = (ViewGroup) pin_boxes.findViewById(R.id.pin_box_layout_5);
+			pinBoxViews[i++] = pin_box_layout.findViewById(R.id.pin_box);
+
+			pin_box_layout = (ViewGroup) pin_boxes.findViewById(R.id.pin_box_layout_6);
+			pinBoxViews[i++] = pin_box_layout.findViewById(R.id.pin_box);
+		}
+
+		private View[] pinBoxViews = new View[pinNum];
+		private int highLightedNum = 0;
 	}
 
 	private boolean shouldVibrate()
@@ -209,7 +265,7 @@ public class PinInputDialog extends DialogFragment {
 				// reset unneeded char
 				pins[pins_index] = 0;
 				--pins_index;
-				// TODO: UI
+				pinBoxHighLighter.setHighLightedNum(pins_index);
 			}
 		} else if (primaryCode == 4869) {       // Hidden egg
 			// TODO: Hidden egg
@@ -218,7 +274,8 @@ public class PinInputDialog extends DialogFragment {
 			if (primaryCode >= 0 && primaryCode <= 127) {
 				pins[pins_index] = (char) primaryCode;
 				++pins_index;
-				// TODO: UI
+				pinBoxHighLighter.setHighLightedNum(pins_index);
+
 				if (pins_index == pinNum) {
 					inputFinish(true);
 					hasSuccess = true;
@@ -228,36 +285,8 @@ public class PinInputDialog extends DialogFragment {
 				Log.w(TAG, "Illegal pin, code: " + primaryCode);
 			}
 		}
-
-
 	}
 
-	private void initPinBoxViews(View dialogRootView)
-	{
-		ViewGroup pin_boxes = (ViewGroup) dialogRootView.findViewById(R.id.pin_boxes);
-
-		ViewGroup pin_box_layout;
-
-		int i = 0;
-		pin_box_layout = (ViewGroup) pin_boxes.findViewById(R.id.pin_box_layout_1);
-		pinBoxViews[i++] = pin_box_layout.findViewById(R.id.pin_box);
-
-		pin_box_layout = (ViewGroup) pin_boxes.findViewById(R.id.pin_box_layout_2);
-		pinBoxViews[i++] = pin_box_layout.findViewById(R.id.pin_box);
-
-		pin_box_layout = (ViewGroup) pin_boxes.findViewById(R.id.pin_box_layout_3);
-		pinBoxViews[i++] = pin_box_layout.findViewById(R.id.pin_box);
-
-		pin_box_layout = (ViewGroup) pin_boxes.findViewById(R.id.pin_box_layout_4);
-		pinBoxViews[i++] = pin_box_layout.findViewById(R.id.pin_box);
-
-		pin_box_layout = (ViewGroup) pin_boxes.findViewById(R.id.pin_box_layout_5);
-		pinBoxViews[i++] = pin_box_layout.findViewById(R.id.pin_box);
-
-		pin_box_layout = (ViewGroup) pin_boxes.findViewById(R.id.pin_box_layout_6);
-		pinBoxViews[i++] = pin_box_layout.findViewById(R.id.pin_box);
-
-	}
 
 	private static final String TAG = "PinInputDialog";
 	private static final int pinNum = 6;
@@ -267,6 +296,7 @@ public class PinInputDialog extends DialogFragment {
 	private KeyboardView keyboardView;
 	private Vibrator vibrator;
 	private OnPinInputFinish onPinInputFinish = null;
+	private PinBoxHighLighter pinBoxHighLighter;
 
 	// has input success
 	private boolean hasSuccess = false;
@@ -274,6 +304,5 @@ public class PinInputDialog extends DialogFragment {
 	// inputted pins
 	private char[] pins = new char[pinNum];
 	private int pins_index = 0;
-	private View[] pinBoxViews = new View[pinNum];
 
 }
