@@ -7,7 +7,9 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.inputmethodservice.Keyboard;
 import android.inputmethodservice.KeyboardView;
+import android.media.AudioManager;
 import android.os.Bundle;
+import android.os.Vibrator;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -32,6 +34,13 @@ public class PinInputDialog extends DialogFragment {
 		Log.v(TAG, "onCreateDialog");
 		// get context
 		mContext = getActivity();
+
+		if (shouldVibrate()) {
+			vibrator = (Vibrator) mContext.getSystemService(Context.VIBRATOR_SERVICE);
+			shouldVibrate = true;
+		} else {
+			shouldVibrate = false;
+		}
 
 
 		// Instantiate an AlertDialog.Builder with its constructor
@@ -90,6 +99,19 @@ public class PinInputDialog extends DialogFragment {
 			dialog.getWindow().setAttributes(lp);
 		}
 
+	}
+
+	private boolean shouldVibrate()
+	{
+		AudioManager audioManager = (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE);
+		if (audioManager.getRingerMode() == AudioManager.RINGER_MODE_SILENT) {
+			return false;
+		} else {
+			// The notification manager will not vibrate if the policy doesn't allow it,
+			// so the client should always set a vibrate pattern,
+			// and let the notification manager control whether or not to actually vibrate.
+			return true;
+		}
 	}
 
 	private void initKeyboard()
@@ -173,6 +195,12 @@ public class PinInputDialog extends DialogFragment {
 
 	private void onKeyInput(int primaryCode)
 	{
+		// Trigger a vibrator
+		final int vibrateTime = 10;     //ms
+		if (shouldVibrate) {
+			vibrator.vibrate(vibrateTime);
+		}
+
 		if (primaryCode == Keyboard.KEYCODE_DELETE) {   // Delete
 			if (pins_index > 0) {
 				// reset unneeded char
@@ -203,9 +231,11 @@ public class PinInputDialog extends DialogFragment {
 
 	private static final String TAG = "PinInputDialog";
 	private static final int pinNum = 6;
+	private static boolean shouldVibrate;
 
 	private Context mContext;
 	private KeyboardView keyboardView;
+	private Vibrator vibrator;
 	private OnPinInputFinish onPinInputFinish = null;
 
 	// has input success
