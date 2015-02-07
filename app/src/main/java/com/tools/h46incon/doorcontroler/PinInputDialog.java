@@ -261,16 +261,30 @@ public class PinInputDialog extends DialogFragment {
 			vibrator.vibrate(vibrateTime);
 		}
 
-		if (primaryCode == Keyboard.KEYCODE_DELETE) {   // Delete
+		// Special key code handler
+		// Delete key
+		if (primaryCode == Keyboard.KEYCODE_DELETE) {
 			if (pins_index > 0) {
 				// reset unneeded char
 				pins[pins_index] = 0;
 				--pins_index;
 				pinBoxHighLighter.setHighLightedNum(pins_index);
 			}
-		} else if (primaryCode == 4869) {       // Hidden egg
-			// TODO: Hidden egg
-		} else {
+		}
+
+		// Hidden Egg....
+		else if (primaryCode == 4869) {
+			AlertDialog.Builder builder = new AlertDialog.Builder(
+					getActivity(),
+					R.style.LightDialog);
+
+			builder.setTitle("哇这又是一个对话框")
+					.setMessage("被吓一跳了吧（づ￣3￣）づ");
+			builder.create().show();
+		}
+
+		// Normal character input
+		else {
 			// legal input is ASCII code
 			if (primaryCode >= 0 && primaryCode <= 127) {
 				pins[pins_index] = (char) primaryCode;
