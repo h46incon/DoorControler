@@ -150,7 +150,6 @@ public class MainActivity extends ActionBarActivity {
 		setContentView(R.layout.activity_main);
 
 		initMember();
-
 	}
 
 	@Override
@@ -234,15 +233,6 @@ public class MainActivity extends ActionBarActivity {
 					{
 						Log.d(TAG, "received selected device " + device.getAddress());
 						connectDoorCtrlDevice(device);
-//						// start device connection in next loop
-//						// to make dialog UI not blocking
-//						mHandler.postDelayed(new Runnable() {
-//							@Override
-//							public void run()
-//							{
-//								connectDoorCtrlDevice(device);
-//							}
-//						}, 20);
 					}
 				}
 		);
@@ -339,7 +329,7 @@ public class MainActivity extends ActionBarActivity {
 
 		// Dev shake hand task
 		final SerialBGWorker.taskInfo devShakeTask = new SerialBGWorker.taskInfo();
-		final int maxTryTimes = 5;         // try 5 times when failed
+		final int maxTryTimes = 3;         // try 5 times when failed
 		final String shakeHandMsgFormat = "正在尝试第(%d/%d)次握手...";
 		devShakeTask.message = String.format(shakeHandMsgFormat, 1, maxTryTimes);
 		devShakeTask.task = new Callable() {
@@ -364,12 +354,9 @@ public class MainActivity extends ActionBarActivity {
 							stateManager.changeState(State.OPEN_DOOR);
 							outputConsole.printNewItem("连接设备成功");
 							needContinue = true;
-						} else {
-							showWrongDeviceDialog();
-							needContinue = false;
+							break;
 						}
-						break;
-
+						// fall down
 					case TIME_OUT:
 						if (triedTimes < maxTryTimes) {
 							// try again
@@ -400,13 +387,14 @@ public class MainActivity extends ActionBarActivity {
 				if (needContinue) {
 					return true;
 				} else {
+					btDisconnect();
 					outputConsole.unIndent();
 					outputConsole.printNewItem("连接设备失败");
 					return false;
 				}
 			}
 		};
-		devShakeTask.timeout = 1 * 1000;
+		devShakeTask.timeout = 5 * 1000;
 
 
 		serialBGWorker.addTask(connectSocketTask);
@@ -488,6 +476,7 @@ public class MainActivity extends ActionBarActivity {
 		outputConsole.printNewItem("正在进行设备握手...");
 		try {
 			btSocketOut.write(0x69);
+			btSocketOut.flush();
 			byteRead = btSocketIn.read();
 		} catch (IOException e) {
 			btDisconnect();
