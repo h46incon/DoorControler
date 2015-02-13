@@ -306,9 +306,9 @@ public class MainActivity extends ActionBarActivity {
 			{
 				boolean needContinue = false;
 				if ((state == BGWorker.WorkState.SUCCESS) && (Boolean) reslut) {
+					// This step will be finished in some millisecond
 					needContinue = getSocketStream();
 				}
-				// This step will be finished in some millisecond
 				if (needContinue) {
 					return true;
 				} else {
@@ -336,6 +336,12 @@ public class MainActivity extends ActionBarActivity {
 			@Override
 			public Object call() throws Exception
 			{
+				// need some time to let it wake up
+				try {
+					Thread.sleep(1000);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
 				return devShakeHand();
 			}
 		};
@@ -351,8 +357,15 @@ public class MainActivity extends ActionBarActivity {
 					case SUCCESS:
 						if ((Boolean) reslut) {
 							outputConsole.unIndent();
-							stateManager.changeState(State.OPEN_DOOR);
-							outputConsole.printNewItem("连接设备成功");
+							// Changing UI.
+							mHandler.post(new Runnable() {
+								@Override
+								public void run()
+								{
+									stateManager.changeState(State.OPEN_DOOR);
+									outputConsole.printNewItem("连接设备成功");
+								}
+							});
 							needContinue = true;
 							break;
 						}
@@ -370,7 +383,7 @@ public class MainActivity extends ActionBarActivity {
 						break;
 
 					case EXCEPTION:
-						// TODO: showWrongDeviceDialog?
+						Log.e(TAG, "exception in device shaking, stop trying.");
 						needContinue = false;
 						break;
 
@@ -394,7 +407,7 @@ public class MainActivity extends ActionBarActivity {
 				}
 			}
 		};
-		devShakeTask.timeout = 5 * 1000;
+		devShakeTask.timeout = 10 * 1000;
 
 
 		serialBGWorker.addTask(connectSocketTask);
