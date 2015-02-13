@@ -4,7 +4,11 @@ import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v7.app.ActionBarActivity;
@@ -150,6 +154,22 @@ public class MainActivity extends ActionBarActivity {
 		setContentView(R.layout.activity_main);
 
 		initMember();
+		IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_ACL_DISCONNECTED);
+		registerReceiver(
+				new BroadcastReceiver() {
+					@Override
+					public void onReceive(Context context, Intent intent)
+					{
+						if (stateManager.curState == State.OPEN_DOOR){
+							String disconnectMsg = "蓝牙连接已断开";
+							MyApp.showSimpleToast(disconnectMsg);
+							outputConsole.printNewItem(disconnectMsg);
+							stateManager.changeState(State.BT_SETTING);
+						}
+					}
+				},
+				filter
+		);
 	}
 
 	@Override
