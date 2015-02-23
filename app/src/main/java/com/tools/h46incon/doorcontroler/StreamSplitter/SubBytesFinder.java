@@ -1,6 +1,8 @@
 package com.tools.h46incon.doorcontroler.StreamSplitter;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by h46incon on 2015/2/17.
@@ -50,6 +52,33 @@ class SubBytesFinder{
 		}
 		// Unreachable statement...
 		// return false;
+	}
+
+	// Slip buf to buffers by pattern
+	// The first buffer is empty if the pattern exist in the front of buf.
+	public List<ByteBuffer> slip(ByteBuffer buf)
+	{
+		ArrayList<ByteBuffer> result = new ArrayList<>();
+		ByteBuffer last;
+		while (true) {
+			last = buf.duplicate();
+			if (skipTillPattern(buf)) {
+				// Find a available piece
+				if (buf.position() - last.position() >= pattern.length) {
+					last.limit(buf.position() - pattern.length);
+					result.add(last);
+				}
+
+				// Add a "null" to indicate a pattern is found
+				result.add(null);
+			} else {
+				last.limit(buf.position());
+				result.add(last);
+				break;
+			}
+		}
+
+		return result;
 	}
 
 	private static int[] BuildNextTable(byte[] pattern)
