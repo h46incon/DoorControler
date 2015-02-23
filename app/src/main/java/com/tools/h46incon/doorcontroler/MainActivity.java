@@ -34,10 +34,7 @@ public class MainActivity extends ActionBarActivity {
 	private static enum  State{
 		BT_SETTING,
 		OPEN_DOOR,
-		EXIT,
-
-		_STATE_NUMBER
-
+		EXIT
 	}
 
 	private static interface OnBTClick{
@@ -128,7 +125,7 @@ public class MainActivity extends ActionBarActivity {
 					new ArrowHLManager(R.drawable.arrow_default, R.drawable.arrow_highlight);
 		}
 
-		private final int stateNum = State._STATE_NUMBER.ordinal();
+		private final int stateNum = State.values().length;
 		private final String TAG = "StateManager";
 
 		private State curState;
@@ -155,21 +152,14 @@ public class MainActivity extends ActionBarActivity {
 
 		initMember();
 		IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_ACL_DISCONNECTED);
-		registerReceiver(
-				new BroadcastReceiver() {
-					@Override
-					public void onReceive(Context context, Intent intent)
-					{
-						if (stateManager.curState == State.OPEN_DOOR){
-							String disconnectMsg = "蓝牙连接已断开";
-							MyApp.showSimpleToast(disconnectMsg);
-							outputConsole.printNewItem(disconnectMsg);
-							stateManager.changeState(State.BT_SETTING);
-						}
-					}
-				},
-				filter
-		);
+		registerReceiver(btDisconnectReceiver, filter);
+	}
+
+	@Override
+	protected void onDestroy()
+	{
+		super.onDestroy();
+		unregisterReceiver(btDisconnectReceiver);
 	}
 
 	@Override
@@ -211,6 +201,18 @@ public class MainActivity extends ActionBarActivity {
 		};
 		stateManager = new StateManager(onBTClick, State.BT_SETTING);
 
+		btDisconnectReceiver = new BroadcastReceiver() {
+			@Override
+			public void onReceive(Context context, Intent intent)
+			{
+				if (stateManager.curState == State.OPEN_DOOR) {
+					String disconnectMsg = "蓝牙连接已断开";
+					MyApp.showSimpleToast(disconnectMsg);
+					outputConsole.printNewItem(disconnectMsg);
+					stateManager.changeState(State.BT_SETTING);
+				}
+			}
+		};
 	}
 
 	private void initExitingWithTurnOffBTDialog()
@@ -576,5 +578,6 @@ public class MainActivity extends ActionBarActivity {
 	private BluetoothAdapter btAdapter;
 	private Handler mHandler = new Handler();
 
+	private BroadcastReceiver btDisconnectReceiver;
 
 }
