@@ -4,7 +4,9 @@ import android.app.Application;
 import android.test.ApplicationTestCase;
 
 import com.tools.h46incon.doorcontroler.Message.MessageDecoder;
+import com.tools.h46incon.doorcontroler.Message.MessageEncoder;
 
+import java.nio.ByteBuffer;
 import java.util.List;
 
 /**
@@ -75,6 +77,20 @@ public class ApplicationTest extends ApplicationTestCase<Application> {
 				assertEquals(strDecode, "Hello RSA");
 			}
 		}
+	}
+
+	public void testEncode() throws Exception
+	{
+		String dataStr = "A5A500005A5A0000";
+
+		byte[] data = strToBytes(dataStr);
+		ByteBuffer byteBuffer = ByteBuffer.wrap(data);
+
+		MessageEncoder messageEncoder = new MessageEncoder();
+
+		ByteBuffer encode = messageEncoder.encode(byteBuffer);
+
+		assertEquals(encode.remaining(), 128+4+2+4+4);
 	}
 
 	private byte[] strToBytes(String hexStr)
