@@ -12,6 +12,7 @@ class Param {
 	public final static int packageMinLen = endBytes.length + headerLen + CRCLen;
 	public final static int randomLenInLoad = 1;
 	public final static String encryptAlgorithm = "RSA/ECB/PKCS1Padding";
+	public final static String keyFactoryAlgorithm = "RSA";
 
 	public final static String decodePrivateKey =
 			"" +
@@ -44,4 +45,20 @@ class Param {
 					"Ue2PXD6b6kud7chuYpSxV9XUgp4Act2tGUYnJJwcMJAVrB39GDTDaXhvO4Hy" +
 					"+x9+PiBBwGTvYSnjMSYzKS4Uqa+3CwxFw3yMWW4pM0OS8QI21gE1N2KFaUdp" +
 					"ihmHWhzA==";
+
+	/** decode public key:
+				 -----BEGIN PUBLIC KEY-----
+				 MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDNUFSPoRJjJPZWwDS5ijDcyL81
+				 EseyVNb/KmwaQgTNQZzigZvb7ZhGI16xaIfcvMaWeqhNH+44SlddsZmjHBDyWUx+
+				 x7e5q7/KNo2ryjQIT0ejCcqqtd0Sv0WvfHySExULLkfCfZq9Ys+tqIOsT9UWQUbE
+				 rxL3fQLBXltHYHaRCQIDAQAB
+				 -----END PUBLIC KEY-----
+	*/
+
+	public static final String encodePubicKey =
+			"" +
+					"MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCxoAqI42Z6qOySucQpQ8XMr+2O" +
+					"cFLFIZ9ddDBCmo91ktmYYF5Nt0qNScJ1In+3hL2JKxqPSWGAA82/f9EJPqPkeaUI" +
+					"LXMWtF7FcPDOfJsnT9sl1k7aHrXVVbyle4Wh2iET63lTJktrYUGlBJ9v0ZVFjT1W" +
+					"VgHpjVItvKs8+UomNQIDAQAB";
 }

@@ -75,7 +75,7 @@ public class MessageDecoder {
 		PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(privKeyByte);
 
 		try {
-			KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+			KeyFactory keyFactory = KeyFactory.getInstance(Param.keyFactoryAlgorithm);
 			return keyFactory.generatePrivate(keySpec);
 		} catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
 			e.printStackTrace();
@@ -86,7 +86,13 @@ public class MessageDecoder {
 
 	public List<byte[]> decode(byte[] msg, int length)
 	{
-		List<byte[]> packages = streamSplitter.join(msg, length);
+		ByteBuffer byteBuffer = ByteBuffer.wrap(msg, 0, length);
+		return decode(byteBuffer);
+	}
+
+	public List<byte[]> decode(ByteBuffer byteBuffer)
+	{
+		List<byte[]> packages = streamSplitter.join(byteBuffer);
 		List<byte[]> results = new LinkedList<>();
 
 		for (byte[] pack : packages) {
