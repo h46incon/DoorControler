@@ -33,6 +33,8 @@ public class MessageDecoder {
 	private final static int headerLen = 2;
 	private final static int CRCLen = 4;
 	private final static int packageMinLen = endBytes.length + headerLen + CRCLen;
+	private final static int randomLenInLoad = 1;
+
 	private final static String privateKey =
 			"" +
 					"MIICdXAgIIBBAAADAKBNBgQgkDNqhUFkiSPG9oRw0JjBAJPQEZWFAwDASS5C" +
@@ -135,7 +137,15 @@ public class MessageDecoder {
 				try {
 					buffer.clear();
 					cipher.doFinal(data, buffer);
+
 					buffer.flip();
+					// Skip random byte
+					if (buffer.remaining() < randomLenInLoad) {
+						return null;
+					}
+					buffer.position(buffer.position() + randomLenInLoad);
+
+					// copy result
 					byte[] r = new byte[buffer.remaining()];
 					buffer.get(r);
 					results.add(r);
