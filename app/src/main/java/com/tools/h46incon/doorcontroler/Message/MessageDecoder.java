@@ -27,46 +27,6 @@ import javax.crypto.ShortBufferException;
  * This class is used to decode message receive from device
  */
 public class MessageDecoder {
-	// Message field Info:
-	private final static byte[] startBytes = new byte[]{(byte) 0xFD, (byte) 0xB1, (byte) 0x85, (byte) 0x40};
-	private final static byte[] endBytes = new byte[]{(byte) 0x40, (byte) 0x85, (byte) 0xB1, (byte) 0xFD};
-	private final static int headerLen = 2;
-	private final static int CRCLen = 4;
-	private final static int packageMinLen = endBytes.length + headerLen + CRCLen;
-	private final static int randomLenInLoad = 1;
-
-	private final static String privateKey =
-			"" +
-					"MIICdXAgIIBBAAADAKBNBgQgkDNqhUFkiSPG9oRw0JjBAJPQEZWFAwDASS5C" +
-					"AijmADcwgyLgJ81cAEsgEeyAAVNoGb/BAKmM1waQVQgI+TNhEQZmMzik9gZl" +
-					"bvbAN7ZLmhGKMI1Nz6xIvaIzUfcSxvM7JaWU1eqv8hNqbH+Bp44CBSlM1ddB" +
-					"nsZOKmjBmHB9vDytmWUEYx+jXx7rFe5ohq79y/K8xNopZ2r6qyjE0QIf7T0j" +
-					"hejKVCc12qqxmtdaM0ScEv0PJWvZTfHH7ySHtEx7mULrvLk8ofC2jfZavq9K" +
-					"NYsAh+tPRqI6MOsJyT9qqUW13QURKbE/Rrxa9L38ffQJILBTFXlQstHuRYH8" +
-					"JaR9mCQr1IDizAQ62ABogAo6xGAP1GaRZxYBR1psSj6vElqvdEx9AmIsFlye" +
-					"WTl0d0kgdXQpEdRJAOYgM6+BAn+AEMRCg+1YAhPZrqjFjzlWmItPqF4Woj6T" +
-					"G5LYiUgXJX0OXy5SRhydBp91EZ95jvtr6WKf4AYxHsw7WPKE+dnqPbdOUozi" +
-					"0JNXi0QPraJktX4SBrlfThfLmScHKl1n1iCn1jHesrAdB8+XU77sEIbm2Yx7" +
-					"5B8LFceaijI1E915cz41mZeTXBSZDQApd1MoqXr3rHQ2rV13sLmKk+jVz+4U" +
-					"LW3Os1qdNegqzEdBlNLc6YsISRlXjP6aIBb3NG82DjletxLACA7lyyQVEmbH" +
-					"SOEnH3/ioXGdxCEwGVYa9ytEXqklwrbVFo7+D3sC2nGvIQIq3DAEBQAQVBBC" +
-					"dJtkbu+UmSxpGWoYvtRQJOXBANZPqk1WV2Qq96XpOaKmSt6LC9qwM97f5Cpo" +
-					"BFclS1CX2zrU4HT8LasoDwZX+XO3kiEQOl4wX2iIgNzekdgbZ3rxAQAn+pc8" +
-					"flRLXBAr2oGaaAAUcaxS+74HObaf6bVe+UqWLb4pLZoylEv1oenlg9y+8xCn" +
-					"Auk1xEb6aPcIGNb089ICQqaQDI4RvhI6UMBdeX+PH1w45UykYoariPY1YYz2" +
-					"PC0kNVHO91Lz7y0Gbpxbd4qrpHc2CcBsQmvfaRF5+5cQoFRm1fgBjwtEury3" +
-					"SKtsvxA4qUFjmQnnvZGcB1JFlqRZ0mL1M0Cz5QQ7YD6PqllS5avyGaTlLpk1" +
-					"eiwnisD3ZH+RgaAnAZUkAlRHcr+NN4+eHYJgfOQH2gvIENbZNKTKdv4JheOL" +
-					"h4xr7b1DHcMfJcKbjm2Q5kTAiXBATEHYppmR2utGaOiHPuKk/NJOrmyzA+xc" +
-					"zUgsYkkFtk9j6IuuJMLJvyzKPv2boF91/lO6qPCQ16Apd1/det53EEDDdsF/" +
-					"VyIXsHpo7G2tAcQkBJ/pSvHr5y1Vf69DhmmkDlHRzEvekhzRTn+XKnvAxlib" +
-					"46SKw8pHqdal4JYwUPvZaJwrANcnYembxiB5OtP8CAkC7EAi20b4N+lnkHXM" +
-					"PjxE++OzEZGAMK4sKtWz3Nj+z5DdmTvozc+/cxmZt23aNa6jKdg8/rEh0H2J" +
-					"Wuf1tkKzAJtkEQYAmxLY5t0V3rLjz+KKbo5zep70d3A/7RZ4MWdboNTqaM+e" +
-					"Ue2PXD6b6kud7chuYpSxV9XUgp4Act2tGUYnJJwcMJAVrB39GDTDaXhvO4Hy" +
-					"+x9+PiBBwGTvYSnjMSYzKS4Uqa+3CwxFw3yMWW4pM0OS8QI21gE1N2KFaUdp" +
-					"ihmHWhzA==";
-
 
 	private final static StreamSplitter.MsgLenGetterCB msgLenGetter = new StreamSplitter.MsgLenGetterCB() {
 		@Override
@@ -84,13 +44,13 @@ public class MessageDecoder {
 	public MessageDecoder() throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException
 	{
 		StreamSplitter.PackageFormat packageFormat = new StreamSplitter.PackageFormat();
-		packageFormat.startBytes = startBytes;
-		packageFormat.headerLen = headerLen;
+		packageFormat.startBytes = Param.startBytes;
+		packageFormat.headerLen = Param.headerLen;
 		packageFormat.lenGetter = msgLenGetter;
 
 		streamSplitter = new StreamSplitter(packageFormat);
 
-		cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
+		cipher = Cipher.getInstance(Param.encryptAlgorithm);
 		cipher.init(Cipher.DECRYPT_MODE, getRSAPrivateKey());
 
 	}
@@ -99,11 +59,11 @@ public class MessageDecoder {
 	{
 		// Decrypt private key
 		StringBuilder stringBuilder = new StringBuilder(1024);
-		int size = (privateKey.length() - 4 - 2) / 2;
+		int size = (Param.decodePrivateKey.length() - 4 - 2) / 2;
 
 		stringBuilder.append("MIIC");
 		for (int i = 0; i < size; i++) {
-			char c = privateKey.charAt(i * 2 + i % 2 + 4);
+			char c = Param.decodePrivateKey.charAt(i * 2 + i % 2 + 4);
 			stringBuilder.append(c);
 		}
 		stringBuilder.append("=");
@@ -140,10 +100,10 @@ public class MessageDecoder {
 
 					buffer.flip();
 					// Skip random byte
-					if (buffer.remaining() < randomLenInLoad) {
+					if (buffer.remaining() < Param.randomLenInLoad) {
 						return null;
 					}
-					buffer.position(buffer.position() + randomLenInLoad);
+					buffer.position(buffer.position() + Param.randomLenInLoad);
 
 					// copy result
 					byte[] r = new byte[buffer.remaining()];
@@ -162,13 +122,13 @@ public class MessageDecoder {
 	private ByteBuffer getLoad(byte[] pack)
 	{
 		// Check length
-		if (pack.length < packageMinLen) {
+		if (pack.length < Param.packageMinLen) {
 			return null;
 		}
 
 		// Check end bytes
-		for (int i = endBytes.length; i > 0; --i) {
-			if (pack[pack.length - i] != endBytes[endBytes.length - i]) {
+		for (int i = Param.endBytes.length; i > 0; --i) {
+			if (pack[pack.length - i] != Param.endBytes[Param.endBytes.length - i]) {
 				return null;
 			}
 		}
@@ -176,14 +136,14 @@ public class MessageDecoder {
 
 		// Check CRC
 		CRC32 crc32 = new CRC32();
-		final int loadLen = pack.length - headerLen - CRCLen - endBytes.length;
-		crc32.update(pack, headerLen, loadLen);
+		final int loadLen = pack.length - Param.headerLen - Param.CRCLen - Param.endBytes.length;
+		crc32.update(pack, Param.headerLen, loadLen);
 		// Need convert crc32 into int,
 		// because I will convert 4bytes data into int later.
 		int crcTarget = (int)crc32.getValue();
 
 		// Get CRC value in package
-		ByteBuffer byteBuffer = ByteBuffer.wrap(pack, headerLen + loadLen, CRCLen);
+		ByteBuffer byteBuffer = ByteBuffer.wrap(pack, Param.headerLen + loadLen, Param.CRCLen);
 		byteBuffer.order(ByteOrder.BIG_ENDIAN);
 		int crcExpect = byteBuffer.getInt();
 
@@ -191,7 +151,7 @@ public class MessageDecoder {
 			return null;
 		}
 
-		return ByteBuffer.wrap(pack, headerLen, loadLen);
+		return ByteBuffer.wrap(pack, Param.headerLen, loadLen);
 	}
 
 	private StreamSplitter streamSplitter;
