@@ -49,6 +49,7 @@ public class StreamSplitter {
 		this.msgHeaderLen = packageFormat.headerLen;
 		this.lenGetter = packageFormat.lenGetter;
 
+		msgBuf = new ByteStreamBuffer();
 		startBytesFinder = new SubBytesFinder(packageFormat.startBytes);
 		receivingState = ReceivingState.START_BYTES;
 	}
@@ -138,7 +139,7 @@ public class StreamSplitter {
 		MSG,
 	}
 
-	private ByteStreamBuffer msgBuf = new ByteStreamBuffer();
+	private ByteStreamBuffer msgBuf;
 	private ReceivingState receivingState;
 	private int nextPackLen = 0;
 	final private int msgHeaderLen;

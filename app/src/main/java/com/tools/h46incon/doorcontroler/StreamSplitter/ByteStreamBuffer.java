@@ -7,14 +7,18 @@ import java.nio.ByteBuffer;
  * It could get bytes with given length, but may stored in different input stream
  */
 class ByteStreamBuffer {
-	private final int kInitBufLen = 1024;
+	private static final int kDefaultInitBufLen = 1024;
 	private ByteBuffer newInBuffer;
 	private ByteBuffer remainBuffer;
 
-	public ByteStreamBuffer() {
-		// Flip remainBuffer to read
-		remainBuffer = ByteBuffer.allocate(kInitBufLen);
-		remainBuffer.flip();
+	public ByteStreamBuffer()
+	{
+		this(kDefaultInitBufLen);
+	}
+
+	public ByteStreamBuffer(int initBufLen) {
+		remainBuffer = ByteBuffer.allocate(initBufLen);
+		resetBuffer(remainBuffer);
 	}
 
 	public void newInputStream(byte[] inStream, int length)
@@ -46,8 +50,10 @@ class ByteStreamBuffer {
 
 		byte[] msgReturn = new byte[msgLen];
 		final int remainBufPopLen =
-				(remainBuffer.remaining() >= msgLen) ? remainBuffer.remaining() : msgLen;
-		getDataFromBuffer(remainBuffer, msgReturn, 0, remainBufPopLen, needPop);
+				Math.min(remainBuffer.remaining(), msgLen);
+		if (remainBufPopLen > 0) {
+			getDataFromBuffer(remainBuffer, msgReturn, 0, remainBufPopLen, needPop);
+		}
 
 		final int newBufPopLen = msgLen - remainBufPopLen;
 		if (newBufPopLen > 0) {
@@ -59,7 +65,7 @@ class ByteStreamBuffer {
 	}
 
 	public void Clear(){
-		remainBuffer.clear();
+		resetBuffer(remainBuffer);
 		newInBuffer = null;
 	}
 
@@ -82,36 +88,55 @@ class ByteStreamBuffer {
 		}
 		// Clean remainBuffer, to make most usage of it
 		if (!remainBuffer.hasRemaining()){
-			remainBuffer.clear();
+			resetBuffer(remainBuffer);
 		}
 		int totalLen = newInBuffer.remaining() + remainBuffer.remaining();
 
-		// flip remainBuffer to WRITE
-		remainBuffer.flip();
+		// Enable remainBuffer to WRITE
+		int lastRemainBufPos = remainBuffer.position();
+		remainBuffer.position(remainBuffer.limit());
+		remainBuffer.limit(remainBuffer.capacity());
 
 		// when could not append directly
 		if (newInBuffer.remaining() > remainBuffer.remaining()) {
 			if (remainBuffer.capacity() >= totalLen) {
 				// Just compact
 				remainBuffer.compact();
+				lastRemainBufPos = 0;
 			} else {
 				// need new a buffer
 				ByteBuffer newBuffer = ByteBuffer.allocate(totalLen);
-				// flip remainBuffer to READ
-				remainBuffer.flip();
+				// Make remainBuffer to READ
+				remainBuffer.limit(remainBuffer.position());
+				remainBuffer.position(lastRemainBufPos);
+
+				// Move to new buffer
 				newBuffer.put(remainBuffer);
-				remainBuffer.clear();
 				remainBuffer = newBuffer;
+
+				// reset pos to zero
+				lastRemainBufPos = 0;
 			}
 
 		}
 		// append remain data
 		remainBuffer.put(newInBuffer);
 
-		// flip remainBuffer to Read
-		remainBuffer.flip();
+		// Make remainBuffer to Read
+		// Do not use flip() function, because position may not be 0 after flip
+		remainBuffer.limit(remainBuffer.position());
+		remainBuffer.position(lastRemainBufPos);
 
 		newInBuffer = null;
+	}
+
+	// clear buffer, and make it into read state
+	private static void resetBuffer(ByteBuffer buffer)
+	{
+		buffer.clear();
+		// Now buffer is read for write
+		// Flip to read
+		buffer.flip();
 	}
 
 }

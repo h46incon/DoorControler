@@ -35,6 +35,7 @@ class SubBytesFinder{
 				++patIndex;
 				// test all match
 				if (patIndex == pattern.length) {
+					patIndex = 0;
 					return true;
 				} else {
 					// try read next byte
