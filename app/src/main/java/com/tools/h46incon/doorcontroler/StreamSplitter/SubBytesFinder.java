@@ -9,7 +9,7 @@ import java.util.List;
  * Find pattern using KMP
  * It could find pattern which may dispersed on many string
  */
-class SubBytesFinder{
+public class SubBytesFinder{
 	public SubBytesFinder(byte[] pattern){
 		this.pattern = pattern.clone();
 		this.nextTable = BuildNextTable(pattern);
@@ -18,6 +18,12 @@ class SubBytesFinder{
 	public void reset()
 	{
 		this.patIndex = 0;
+	}
+
+	public boolean findIn(ByteBuffer buf)
+	{
+		ByteBuffer dup = buf.duplicate();
+		return skipTillPattern(dup);
 	}
 
 	// skip all data until read a start bytes

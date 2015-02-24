@@ -60,7 +60,7 @@ public class StreamSplitter {
 		return this.join(byteBuffer);
 	}
 
-	private List<byte[]> join(ByteBuffer inStream)
+	public List<byte[]> join(ByteBuffer inStream)
 	{
 		List<ByteBuffer> buffers = startBytesFinder.slip(inStream);
 		List<byte[]> result = new LinkedList<>();
