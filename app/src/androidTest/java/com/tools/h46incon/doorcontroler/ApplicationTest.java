@@ -5,6 +5,7 @@ import android.test.ApplicationTestCase;
 
 import com.tools.h46incon.doorcontroler.Message.MessageDecoder;
 import com.tools.h46incon.doorcontroler.Message.MessageEncoder;
+import com.tools.h46incon.doorcontroler.Message.RSADecoder;
 
 import java.nio.ByteBuffer;
 import java.util.List;
@@ -69,11 +70,15 @@ public class ApplicationTest extends ApplicationTestCase<Application> {
 
 		MessageDecoder decoder = new MessageDecoder();
 
+		RSADecoder rsaDecoder = new RSADecoder();
 		for (byte[] msg : msgs) {
 			List<byte[]> decode = decoder.decode(msg, msg.length);
 			if (!decode.isEmpty()) {
 				byte[] msgDecode = decode.get(0);
-				String strDecode = new String(msgDecode);
+				ByteBuffer decrypt = rsaDecoder.decode(ByteBuffer.wrap(msgDecode));
+				byte[] d = new byte[decrypt.remaining()];
+				decrypt.get(d);
+				String strDecode = new String(d);
 				assertEquals(strDecode, "Hello RSA");
 			}
 		}

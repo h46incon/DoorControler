@@ -1,26 +1,13 @@
 package com.tools.h46incon.doorcontroler.Message;
 
-import android.util.Base64;
-
 import com.tools.h46incon.doorcontroler.StreamSplitter.StreamSplitter;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.security.InvalidKeyException;
-import java.security.Key;
-import java.security.KeyFactory;
-import java.security.NoSuchAlgorithmException;
-import java.security.spec.InvalidKeySpecException;
-import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.zip.CRC32;
 
-import javax.crypto.BadPaddingException;
-import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
-import javax.crypto.ShortBufferException;
 
 /**
  * Created by h46incon on 2015/2/23.
@@ -41,7 +28,7 @@ public class MessageDecoder {
 	};
 
 
-	public MessageDecoder() throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException
+	public MessageDecoder()
 	{
 		StreamSplitter.PackageFormat packageFormat = new StreamSplitter.PackageFormat();
 		packageFormat.startBytes = Param.startBytes;
@@ -50,38 +37,11 @@ public class MessageDecoder {
 
 		streamSplitter = new StreamSplitter(packageFormat);
 
-		cipher = Cipher.getInstance(Param.encryptAlgorithm);
-		cipher.init(Cipher.DECRYPT_MODE, getRSAPrivateKey());
-
-	}
-
-	private Key getRSAPrivateKey()
-	{
-		// Decrypt private key
-		StringBuilder stringBuilder = new StringBuilder(1024);
-		int size = (Param.decodePrivateKey.length() - 4 - 2) / 2;
-
-		stringBuilder.append("MIIC");
-		for (int i = 0; i < size; i++) {
-			char c = Param.decodePrivateKey.charAt(i * 2 + i % 2 + 4);
-			stringBuilder.append(c);
-		}
-		stringBuilder.append("=");
-		stringBuilder.append("=");
-		String privateKey = stringBuilder.toString();
-
-		// Gen private key
-		byte[] privKeyByte = Base64.decode(privateKey, Base64.DEFAULT);
-		PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(privKeyByte);
-
 		try {
-			KeyFactory keyFactory = KeyFactory.getInstance(Param.keyFactoryAlgorithm);
-			return keyFactory.generatePrivate(keySpec);
-		} catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
-			e.printStackTrace();
-		}
+			rsaDecoder = new RSADecoder();
+		} catch (Exception e) {
 
-		return null;
+		}
 	}
 
 	public List<byte[]> decode(byte[] msg, int length)
@@ -100,25 +60,10 @@ public class MessageDecoder {
 			if (data == null) {
 				// Note: NACK
 			} else {
-				try {
-					buffer.clear();
-					cipher.doFinal(data, buffer);
-
-					buffer.flip();
-					// Skip random byte
-					if (buffer.remaining() < Param.randomLenInLoad) {
-						return null;
-					}
-					buffer.position(buffer.position() + Param.randomLenInLoad);
-
-					// copy result
-					byte[] r = new byte[buffer.remaining()];
-					buffer.get(r);
-					results.add(r);
-					// Note: ACK
-				} catch (ShortBufferException | IllegalBlockSizeException | BadPaddingException e) {
-					e.printStackTrace();
-				}
+				// Copy result
+				byte[] r = new byte[data.remaining()];
+				data.get(r);
+				results.add(r);
 			}
 		}
 
@@ -161,6 +106,5 @@ public class MessageDecoder {
 	}
 
 	private StreamSplitter streamSplitter;
-	private ByteBuffer buffer = ByteBuffer.allocate(4096);
-	private Cipher cipher;
+	private RSADecoder rsaDecoder;
 }
