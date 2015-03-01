@@ -1,26 +1,14 @@
 package com.tools.h46incon.doorcontroler.Message;
 
-import android.util.Base64;
-
 import com.tools.h46incon.doorcontroler.StreamSplitter.SubBytesFinder;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.nio.InvalidMarkException;
 import java.security.InvalidKeyException;
-import java.security.Key;
-import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
-import java.security.spec.InvalidKeySpecException;
-import java.security.spec.X509EncodedKeySpec;
-import java.util.Random;
 import java.util.zip.CRC32;
 
-import javax.crypto.BadPaddingException;
-import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
-import javax.crypto.ShortBufferException;
 
 /**
  * Created by h46incon on 2015/2/24.
@@ -29,8 +17,6 @@ import javax.crypto.ShortBufferException;
 public class MessageEncoder {
 	public MessageEncoder() throws InvalidKeyException, NoSuchPaddingException, NoSuchAlgorithmException
 	{
-		cipher = Cipher.getInstance(Param.encryptAlgorithm);
-		cipher.init(Cipher.ENCRYPT_MODE, getPublicKey());
 		outputBuffer = ByteBuffer.allocate(4096);
 		inputBuffer = ByteBuffer.allocate(4096);
 
@@ -39,31 +25,31 @@ public class MessageEncoder {
 
 	public ByteBuffer encode(ByteBuffer message)
 	{
-		// Copy data
-		copyInputInBuffer(message);
-
-		int maxTryTimes = 5;
-		for (int i = 0; i < maxTryTimes; i++) {
-			// Write random bytes
-			writeRandomInInputBuf();
-			inputBuffer.position(0);
-
-			if (packData()) {
-				// Check if it contain start bytes
-				outputBuffer.position(1);
-				startBytesFinder.reset();
-				if (!startBytesFinder.findIn(outputBuffer)) {
-					outputBuffer.position(0);
-					return outputBuffer;
-				}
+		// Write random bytes
+		if (packData(message)) {
+			// Check if it contain start bytes
+			outputBuffer.position(1);
+			startBytesFinder.reset();
+			if (!startBytesFinder.findIn(outputBuffer)) {
+				outputBuffer.position(0);
+				return outputBuffer;
+			} else {
+				return null;
 			}
 		}
 
 		return null;
 	}
 
-	private boolean packData()
+	private boolean packData(ByteBuffer input)
 	{
+		// Prepare
+		final int inputLen = input.remaining();
+		final int totalLen =
+				Param.startBytes.length + inputLen + Param.CRCLen + Param.endBytes.length;
+		if (totalLen > outputBuffer.capacity()) {
+			outputBuffer = ByteBuffer.allocate(totalLen);
+		}
 		outputBuffer.clear();
 
 		// put start bytes
@@ -73,18 +59,12 @@ public class MessageEncoder {
 		final int loadPos = outputBuffer.position() + Param.headerLen;
 		outputBuffer.position(loadPos);
 
-		// put Encrypted data
-		int encryptedDataLen = 0;
-		try {
-			encryptedDataLen = cipher.doFinal(inputBuffer, outputBuffer);
-		} catch (ShortBufferException | IllegalBlockSizeException | BadPaddingException e) {
-			e.printStackTrace();
-			return false;
-		}
+		// put data
+		outputBuffer.put(input);
 
 		// Put crc32 value
 		CRC32 crc32 = new CRC32();
-		crc32.update(outputBuffer.array(), loadPos, encryptedDataLen);
+		crc32.update(outputBuffer.array(), loadPos, inputLen);
 		final int crcVal = (int) crc32.getValue();
 		outputBuffer.putInt(crcVal);
 
@@ -96,7 +76,7 @@ public class MessageEncoder {
 
 		// Put header
 		outputBuffer.position(Param.startBytes.length);
-		final int loadLen = encryptedDataLen + Param.CRCLen + Param.endBytes.length;
+		final int loadLen = inputLen + Param.CRCLen + Param.endBytes.length;
 		intToBytes(loadLen, headerBytes);
 		outputBuffer.put(headerBytes);
 
@@ -104,42 +84,6 @@ public class MessageEncoder {
 		return true;
 	}
 
-	private void copyInputInBuffer(ByteBuffer input)
-	{
-		inputBuffer.clear();
-		inputBuffer.position(Param.randomLenInLoad);
-		inputBuffer.put(input);
-		inputBuffer.flip();
-	}
-
-	private void writeRandomInInputBuf()
-	{
-		inputBuffer.mark();
-		inputBuffer.position(0);
-
-		random.nextBytes(randomBytes);
-		inputBuffer.put(randomBytes);
-
-		try {
-			inputBuffer.reset();
-		} catch (InvalidMarkException e) {
-		}
-	}
-
-	private static Key getPublicKey()
-	{
-		byte[] publicKey = Base64.decode(Param.encodePubicKey, Base64.DEFAULT);
-		X509EncodedKeySpec keySpec = new X509EncodedKeySpec(publicKey);
-
-		try {
-			KeyFactory keyFactory = KeyFactory.getInstance(Param.keyFactoryAlgorithm);
-			return keyFactory.generatePublic(keySpec);
-		} catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
-			e.printStackTrace();
-		}
-
-		return null;
-	}
 
 	private static void intToBytes(int val, byte[] out)
 	{
@@ -150,10 +94,7 @@ public class MessageEncoder {
 	}
 
 	private SubBytesFinder startBytesFinder = new SubBytesFinder(Param.startBytes);
-	private Random random = new Random(System.currentTimeMillis());
-	private byte[] randomBytes = new byte[Param.randomLenInLoad];
 	private byte[] headerBytes = new byte[Param.headerLen];
-	private Cipher cipher;
 	private ByteBuffer outputBuffer;
 	private ByteBuffer inputBuffer;
 }
