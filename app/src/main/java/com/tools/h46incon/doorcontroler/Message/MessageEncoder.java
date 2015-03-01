@@ -4,21 +4,16 @@ import com.tools.h46incon.doorcontroler.StreamSplitter.SubBytesFinder;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 import java.util.zip.CRC32;
-
-import javax.crypto.NoSuchPaddingException;
 
 /**
  * Created by h46incon on 2015/2/24.
  * Use to encode message transfer to device
  */
 public class MessageEncoder {
-	public MessageEncoder() throws InvalidKeyException, NoSuchPaddingException, NoSuchAlgorithmException
+	public MessageEncoder()
 	{
 		outputBuffer = ByteBuffer.allocate(4096);
-		inputBuffer = ByteBuffer.allocate(4096);
 
 		outputBuffer.order(ByteOrder.BIG_ENDIAN);
 	}
@@ -96,5 +91,4 @@ public class MessageEncoder {
 	private SubBytesFinder startBytesFinder = new SubBytesFinder(Param.startBytes);
 	private byte[] headerBytes = new byte[Param.headerLen];
 	private ByteBuffer outputBuffer;
-	private ByteBuffer inputBuffer;
 }

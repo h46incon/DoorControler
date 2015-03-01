@@ -3,6 +3,7 @@ package com.tools.h46incon.doorcontroler;
 import android.app.Application;
 import android.test.ApplicationTestCase;
 
+import com.tools.h46incon.doorcontroler.Message.Encrypter;
 import com.tools.h46incon.doorcontroler.Message.MessageDecoder;
 import com.tools.h46incon.doorcontroler.Message.MessageEncoder;
 import com.tools.h46incon.doorcontroler.Message.RSADecoder;
@@ -99,6 +100,21 @@ public class ApplicationTest extends ApplicationTestCase<Application> {
 		MessageEncoder messageEncoder = new MessageEncoder();
 		ByteBuffer encode = messageEncoder.encode(encrypedData);
 		assertEquals(encode.remaining(), 128 + 4 + 2 + 4 + 4);
+	}
+
+	public void testEncrypter() throws Exception
+	{
+		Encrypter encrypter = new Encrypter();
+		encrypter.setKey("01:23:45:67:89:AB");
+
+		String msgStr = "Hello my encrypter";
+		byte[] msg = msgStr.getBytes();
+		byte[] encrypted = encrypter.encrypt(msg, 0, msg.length);
+		byte[] decrypted = encrypter.decrypt(encrypted, 0, encrypted.length);
+
+		String strDec = new String(decrypted);
+		assertEquals(strDec, msgStr);
+
 	}
 
 	private byte[] strToBytes(String hexStr)

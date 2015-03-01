@@ -48,6 +48,7 @@ class ByteStreamBuffer {
 			return null;
 		}
 
+		// TODO: new too many big object may lead performance problem
 		byte[] msgReturn = new byte[msgLen];
 		final int remainBufPopLen =
 				Math.min(remainBuffer.remaining(), msgLen);
