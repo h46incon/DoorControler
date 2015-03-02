@@ -14,71 +14,99 @@ public class MessageEncoder {
 	public MessageEncoder()
 	{
 		outputBuffer = ByteBuffer.allocate(4096);
-
-		outputBuffer.order(ByteOrder.BIG_ENDIAN);
 	}
 
-	public ByteBuffer encode(ByteBuffer message)
-	{
-		// Write random bytes
-		if (packData(message)) {
-			// Check if it contain start bytes
-			outputBuffer.position(1);
-			startBytesFinder.reset();
-			if (!startBytesFinder.findIn(outputBuffer)) {
-				outputBuffer.position(0);
-				return outputBuffer;
-			} else {
-				return null;
-			}
-		}
-
-		return null;
-	}
-
-	private boolean packData(ByteBuffer input)
+	public ByteBuffer encode(ByteBuffer input)
 	{
 		// Prepare
-		final int inputLen = input.remaining();
-		final int totalLen =
-				Param.startBytes.length + inputLen + Param.CRCLen + Param.endBytes.length;
+		final int totalLen = getOutputTotalLen(input.remaining());
 		if (totalLen > outputBuffer.capacity()) {
 			outputBuffer = ByteBuffer.allocate(totalLen);
 		}
 		outputBuffer.clear();
 
+		// Encode
+		if (encode(input, outputBuffer)) {
+			outputBuffer.flip();
+			return outputBuffer.duplicate();
+		} else {
+			return null;
+		}
+	}
+
+	public boolean encode(ByteBuffer input, ByteBuffer output)
+	{
+		if (output.remaining() < getOutputTotalLen(input.remaining())) {
+			throw new IllegalArgumentException("Output buffer is not enough");
+		}
+
+		int begPos = output.position();
+		// Write random bytes
+		if (packData(input, output)) {
+			int endPos = output.position();
+			// Check if it contain start bytes
+			output.position(begPos + 1);
+			startBytesFinder.reset();
+			if (!startBytesFinder.findIn(output)) {
+				output.position(endPos);
+				return true;
+			} else {
+				return false;
+			}
+		}
+
+		return false;
+	}
+
+	private boolean packData(ByteBuffer input, ByteBuffer output)
+	{
+		final int inputLen = input.remaining();
+		// Set endian
+		ByteOrder orderBackup = output.order();
+		output.order(ByteOrder.BIG_ENDIAN);
+
 		// put start bytes
-		outputBuffer.put(Param.startBytes);
+		output.put(Param.startBytes);
 
 		// Skip header
-		final int loadPos = outputBuffer.position() + Param.headerLen;
-		outputBuffer.position(loadPos);
+		final int loadPos = output.position() + Param.headerLen;
+		output.position(loadPos);
 
 		// put data
-		outputBuffer.put(input);
+		output.put(input);
 
 		// Put crc32 value
 		CRC32 crc32 = new CRC32();
-		crc32.update(outputBuffer.array(), loadPos, inputLen);
+		crc32.update(output.array(), loadPos, inputLen);
 		final int crcVal = (int) crc32.getValue();
-		outputBuffer.putInt(crcVal);
+		output.putInt(crcVal);
 
 		// Put end bytes
-		outputBuffer.put(Param.endBytes);
+		output.put(Param.endBytes);
 
-		// Flip
-		outputBuffer.flip();
+		// backup end pos
+		int endPos = output.position();
 
 		// Put header
-		outputBuffer.position(Param.startBytes.length);
+		output.position(loadPos - Param.headerLen);
 		final int loadLen = inputLen + Param.CRCLen + Param.endBytes.length;
 		intToBytes(loadLen, headerBytes);
-		outputBuffer.put(headerBytes);
+		output.put(headerBytes);
 
-		outputBuffer.position(0);
+		// reset some field
+		output.order(orderBackup);
+		output.position(endPos);
+
 		return true;
 	}
 
+
+	public int getOutputTotalLen(int inputLen)
+	{
+		final int totalLen =
+				Param.startBytes.length + inputLen + Param.CRCLen + Param.endBytes.length;
+		return totalLen;
+	}
 
 	private static void intToBytes(int val, byte[] out)
 	{
