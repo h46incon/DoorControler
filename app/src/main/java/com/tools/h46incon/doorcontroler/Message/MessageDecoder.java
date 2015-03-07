@@ -36,12 +36,6 @@ public class MessageDecoder {
 		packageFormat.lenGetter = msgLenGetter;
 
 		streamSplitter = new StreamSplitter(packageFormat);
-
-		try {
-			rsaDecoder = new RSADecoder();
-		} catch (Exception e) {
-
-		}
 	}
 
 	public List<byte[]> decode(byte[] msg, int length)
@@ -68,6 +62,11 @@ public class MessageDecoder {
 		}
 
 		return results;
+	}
+
+	public void reset()
+	{
+		streamSplitter.reset();
 	}
 
 	private ByteBuffer getLoad(byte[] pack)
@@ -106,5 +105,4 @@ public class MessageDecoder {
 	}
 
 	private StreamSplitter streamSplitter;
-	private RSADecoder rsaDecoder;
 }

@@ -75,11 +75,21 @@ public class StreamSplitter {
 		return result;
 	}
 
+	public void reset()
+	{
+		msgBuf.clear();
+		receivingState = ReceivingState.START_BYTES;
+		nextPackLen = 0;
+
+		startBytesFinder.reset();
+
+	}
+
 	private byte[] joinWithBufferPiece(ByteBuffer inStream)
 	{
 		if (inStream == null) {
 			// is a start byte
-			this.msgBuf.Clear();
+			this.msgBuf.clear();
 			// enter next state of START_BYTES
 			this.receivingState = ReceivingState.START_BYTES;
 			enterNextReceivingState();

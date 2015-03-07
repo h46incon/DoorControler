@@ -65,7 +65,7 @@ class ByteStreamBuffer {
 
 	}
 
-	public void Clear(){
+	public void clear(){
 		resetBuffer(remainBuffer);
 		newInBuffer = null;
 	}
