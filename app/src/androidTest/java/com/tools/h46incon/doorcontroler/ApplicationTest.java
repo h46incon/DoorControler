@@ -109,10 +109,14 @@ public class ApplicationTest extends ApplicationTestCase<Application> {
 
 		String msgStr = "Hello my encrypter";
 		byte[] msg = msgStr.getBytes();
-		byte[] encrypted = encrypter.encrypt(msg, 0, msg.length);
-		byte[] decrypted = encrypter.decrypt(encrypted, 0, encrypted.length);
+		ByteBuffer msgBuf = ByteBuffer.wrap(msg);
+		ByteBuffer encrypted = encrypter.encrypt(msgBuf);
+		ByteBuffer decrypted = encrypter.decrypt(encrypted);
 
-		String strDec = new String(decrypted);
+		byte[] decryptedBytes = new byte[decrypted.remaining()];
+		decrypted.get(decryptedBytes);
+
+		String strDec = new String(decryptedBytes);
 		assertEquals(strDec, msgStr);
 
 	}

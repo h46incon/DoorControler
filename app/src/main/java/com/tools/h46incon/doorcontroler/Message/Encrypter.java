@@ -30,13 +30,17 @@ public class Encrypter {
 		return macAddr;
 	}
 
-	public byte[] encrypt(byte[] input, int start, int byteCount)
+	public ByteBuffer encrypt(ByteBuffer input)
 	{
-		ByteBuffer inputB = ByteBuffer.wrap(input, start, byteCount);
-		ByteBuffer outputB = ByteBuffer.allocate(input.length + 2);
+		final int needBufLen = input.remaining() + 2;
+		if (outputBuf.capacity() < needBufLen) {
+			outputBuf = ByteBuffer.allocate(needBufLen);
+		}
+		outputBuf.clear();
 
-		encrypt(inputB, outputB);
-		return outputB.array();
+		encrypt(input, outputBuf);
+		outputBuf.flip();
+		return outputBuf.duplicate();
 	}
 
 	public void encrypt(ByteBuffer input, ByteBuffer output)
@@ -54,15 +58,21 @@ public class Encrypter {
 		doXOR(input, key, output);
 	}
 
-	public byte[] decrypt(byte[] input, int start, int byteCount)
+	public ByteBuffer decrypt(ByteBuffer input)
 	{
-		if (byteCount < 2) {
+		final int outBufLen = input.remaining() - 2;
+		if (outBufLen < 0) {
 			throw new IllegalArgumentException("Input message is incomplete");
 		}
-		ByteBuffer inputB = ByteBuffer.wrap(input, start, byteCount);
-		ByteBuffer outputB = ByteBuffer.allocate(input.length - 2);
-		decrypt(inputB, outputB);
-		return outputB.array();
+
+		if (outBufLen > outputBuf.capacity()) {
+			outputBuf = ByteBuffer.allocate(outBufLen);
+		}
+		outputBuf.clear();
+
+		decrypt(input, outputBuf);
+		outputBuf.flip();
+		return outputBuf.duplicate();
 	}
 
 	public void decrypt(ByteBuffer input, ByteBuffer output)
@@ -110,7 +120,9 @@ public class Encrypter {
 		return count;
 	}
 
-	Random random = new Random();
+	private Random random = new Random();
+	private static final int defBufSize = 1024;
+	private ByteBuffer outputBuf = ByteBuffer.allocate(defBufSize);
 	private final int macAddrSize = 6;
 	private byte[] macAddr = new byte[macAddrSize];
 }
