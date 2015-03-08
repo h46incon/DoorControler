@@ -13,6 +13,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.ClosedByInterruptException;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 
 /**
  * Created by h46incon on 2015/3/1.
@@ -26,6 +27,13 @@ public class DeviceTalker {
 
 	public void setStream(String deviceMAC, InputStream inputStream, OutputStream outputStream)
 	{
+		this.inputStream = null;
+		try {
+			this.clearInput();
+		} catch (IOException e) {
+			// do nothing
+		}
+
 		this.deviceMAC = deviceMAC;
 		this.inputStream = inputStream;
 		this.outputStream = outputStream;
@@ -51,12 +59,13 @@ public class DeviceTalker {
 	{
 		dataBuf.clear();
 		dataBuf.put(cRequireVerify);
+		dataBuf.flip();
 
 		sendDataBuf();
-
 		readPackages();
+
 		if (packList.isEmpty()) {
-			return false;
+			throw new IOException("Device not responding");
 		}
 
 		for (byte[] pack : packList) {
@@ -66,12 +75,12 @@ public class DeviceTalker {
 				if (pack.length == expectMacAddr.length + 1) {
 					// Check equal
 					int i;
-					for (i = 0; i < pack.length; ++i) {
+					for (i = 0; i < expectMacAddr.length; ++i) {
 						if (expectMacAddr[i] != pack[i + 1]) {
 							break;
 						}
 					}
-					if (i == pack.length) {
+					if (i == expectMacAddr.length) {
 						return true;
 					}
 					// else continue
@@ -88,18 +97,25 @@ public class DeviceTalker {
 		for (char k : key) {
 			dataBuf.putChar(k);
 		}
+		dataBuf.flip();
 
+		sendDataBuf();
 		readPackages();
+
 		if (packList.isEmpty()) {
-			return false;
+			throw new IOException("Device not responding");
 		}
 
 		for (byte[] pack : packList) {
-			if (pack[0] == cCommandResonse) {
-				return true;
+			switch (pack[0]) {
+				case cOpenDoorSuccess:
+					return true;
+				case cOpenDoorKeyError:
+					return false;
 			}
 		}
-		return false;
+
+		throw new IOException("Error device responded");
 	}
 
 	private boolean EnterStreamCommunicateMode(int tryTimes) throws IOException
@@ -168,8 +184,12 @@ public class DeviceTalker {
 
 				// Decode
 				List<byte[]> packs = messageDecoder.decode(inputBuf, dataLen + 1);
-				if (!packs.isEmpty()) {
-					packList.addAll(packs);
+				for (byte[] pack : packs) {
+					// NOTE: performance
+					ByteBuffer decrypt = encrypter.decrypt(ByteBuffer.wrap(pack));
+					byte[] data = new byte[decrypt.remaining()];
+					decrypt.get(data);
+					packList.offer(data);
 					hasGetPack = true;
 				}
 			}
@@ -192,9 +212,11 @@ public class DeviceTalker {
 	private static final byte cEnterStreamCommunicate = 0x76;
 
 	private static final byte cCommandResonse = (byte) 0xFF;
-	private static final byte cCommandFailed = (byte) 0xFD;
-	private static final byte cRequireVerify = (byte) 0xbc;
+	private static final byte cCommandError = (byte) 0xFD;
+	private static final byte cRequireVerify = (byte) 0xBC;
 	private static final byte cOpenDoor = (byte) 0x69;
+	private static final byte cOpenDoorSuccess = (byte) 0x96;
+	private static final byte cOpenDoorKeyError = (byte) 0x99;
 
 	private static final String TAG = "DevTalker";
 
@@ -205,7 +227,7 @@ public class DeviceTalker {
 	private Encrypter encrypter = new Encrypter();
 	private MessageEncoder messageEncoder = new MessageEncoder();
 	private MessageDecoder messageDecoder = new MessageDecoder();
-	private List<byte[]> packList = new LinkedList<>();
+	private Queue<byte[]> packList = new LinkedList<>();
 
 	private static final int kBufferSize = 1024;
 	private ByteBuffer dataBuf = ByteBuffer.allocate(kBufferSize);
