@@ -35,18 +35,16 @@ public class DeviceTalker {
 	public boolean shakeHand() throws IOException
 	{
 		clearInput();
-		int byteRead = -1;
+		byte byteRead;
 		outputStream.write(cRequireSimpleResponse);
 		outputStream.flush();
-		byteRead = inputStream.read();
+		byteRead = (byte)inputStream.read();
 
 		if (byteRead != cDeviceSimpleResponse) {
 			return false;
-		} else {
-			// Enter stream communicate to do complex communication
-			outputStream.write(cEnterStreamCommunicate);
-			return true;
 		}
+
+		return EnterStreamCommunicateMode(3);
 	}
 
 	public boolean verifyDevice() throws IOException
@@ -102,6 +100,28 @@ public class DeviceTalker {
 			}
 		}
 		return false;
+	}
+
+	private boolean EnterStreamCommunicateMode(int tryTimes) throws IOException
+	{
+		if (tryTimes <= 0)
+		{
+			return false;
+		}
+
+		// Enter stream communicate to do complex communication
+		outputStream.write(cEnterStreamCommunicate);
+
+		// Read random key
+		int key2 = inputStream.read();
+		// this key will send twice for check
+		if (key2 == inputStream.read()) {
+			encrypter.setKey2((byte)key2);
+			return true;
+		} else {
+			// Try again
+			return EnterStreamCommunicateMode(tryTimes - 1);
+		}
 	}
 
 	private void sendDataBuf() throws IOException

@@ -15,6 +15,7 @@ import java.util.Random;
  * And the message will by calc by ^KEY
  */
 public class Encrypter {
+
 	public void setKey(String MACAddr)
 	{
 		// Trans to bytes
@@ -23,6 +24,11 @@ public class Encrypter {
 			macAddr[i] = (byte) Integer.parseInt(
 					MACAddr.substring(strI, strI + 2), 16);
 		}
+	}
+
+	public void setKey2(byte key2)
+	{
+		this.key2 = key2;
 	}
 
 	public final byte[] getMacAddr()
@@ -94,7 +100,7 @@ public class Encrypter {
 	{
 		int bitCount = bitCount(random1 & 0xFF);
 		byte key1 = macAddr[bitCount % macAddr.length];
-		return (byte)(key1 ^ ramdom2);
+		return (byte)(key1 ^ ramdom2 ^ key2);
 	}
 
 	private void doXOR(ByteBuffer input, byte key, ByteBuffer output)
@@ -125,4 +131,5 @@ public class Encrypter {
 	private ByteBuffer outputBuf = ByteBuffer.allocate(defBufSize);
 	private final int macAddrSize = 6;
 	private byte[] macAddr = new byte[macAddrSize];
+	private byte key2;
 }
