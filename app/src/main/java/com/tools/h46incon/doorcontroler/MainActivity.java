@@ -470,6 +470,7 @@ public class MainActivity extends ActionBarActivity {
 			return false;
 		}
 
+		btDevice = device;
 		outputConsole.printNewItem("Socket连接...成功");
 		return true;
 	}
@@ -507,29 +508,25 @@ public class MainActivity extends ActionBarActivity {
 			return false;
 		}
 
-		int byteRead = -1;
+		deviceTalker.setStream(btDevice.getAddress(), btSocketIn, btSocketOut);
+
 		outputConsole.printNewItem("正在进行设备握手...");
 		try {
-			btSocketOut.write(0x69);
-			btSocketOut.flush();
-			byteRead = btSocketIn.read();
+			if (deviceTalker.shakeHand()) {
+				Log.i(TAG, "Device shake hand successful");
+				outputConsole.append("成功");
+				return true;
+			} else {
+				Log.e(TAG, "Device respond is error when shaking hand");
+				outputConsole.append("失败！（设备未正确回应）");
+				return false;
+			}
 		} catch (IOException e) {
 			btDisconnect();
 			outputConsole.append("失败！（通信出错）");
 			e.printStackTrace();
 			return false;
 		}
-
-		if (byteRead == 0x96) {
-			Log.i(TAG, "Device shake hand successful");
-			outputConsole.append("成功");
-			return true;
-		} else {
-			Log.e(TAG, "Device respond is error when shaking hand");
-			outputConsole.append("失败！（设备未正确回应）");
-			return false;
-		}
-
 	}
 
 	private boolean openDoor()
@@ -569,9 +566,11 @@ public class MainActivity extends ActionBarActivity {
 
 	private OutputConsole outputConsole;
 
+	private BluetoothDevice btDevice;
 	private BluetoothSocket btSocket;
 	private InputStream btSocketIn;
 	private OutputStream btSocketOut;
+	DeviceTalker deviceTalker = new DeviceTalker();
 
 	private AlertDialog exitingWithTurnOffBTDialog;
 	private StateManager stateManager;
