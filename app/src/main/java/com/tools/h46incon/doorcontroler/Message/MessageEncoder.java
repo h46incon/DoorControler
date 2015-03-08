@@ -58,6 +58,14 @@ public class MessageEncoder {
 		return false;
 	}
 
+	public int getOutputTotalLen(int inputLen)
+	{
+		final int totalLen =
+				Param.startBytes.length + inputLen + Param.CRCLen + Param.endBytes.length;
+		return totalLen;
+	}
+
+
 	private boolean packData(ByteBuffer input, ByteBuffer output)
 	{
 		final int inputLen = input.remaining();
@@ -90,8 +98,8 @@ public class MessageEncoder {
 		// Put header
 		output.position(loadPos - Param.headerLen);
 		final int loadLen = inputLen + Param.CRCLen + Param.endBytes.length;
-		intToBytes(loadLen, headerBytes);
-		output.put(headerBytes);
+		intToBytes(loadLen, headerBuf);
+		output.put(headerBuf);
 
 		// reset some field
 		output.order(orderBackup);
@@ -100,13 +108,6 @@ public class MessageEncoder {
 		return true;
 	}
 
-
-	public int getOutputTotalLen(int inputLen)
-	{
-		final int totalLen =
-				Param.startBytes.length + inputLen + Param.CRCLen + Param.endBytes.length;
-		return totalLen;
-	}
 
 	private static void intToBytes(int val, byte[] out)
 	{
@@ -117,6 +118,6 @@ public class MessageEncoder {
 	}
 
 	private SubBytesFinder startBytesFinder = new SubBytesFinder(Param.startBytes);
-	private byte[] headerBytes = new byte[Param.headerLen];
+	private byte[] headerBuf = new byte[Param.headerLen];
 	private ByteBuffer outputBuffer;
 }

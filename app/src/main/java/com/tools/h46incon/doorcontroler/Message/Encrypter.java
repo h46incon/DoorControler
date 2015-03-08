@@ -93,7 +93,7 @@ public class Encrypter {
 	private byte calcKey(byte random1, byte ramdom2)
 	{
 		int bitCount = bitCount(random1 & 0xFF);
-		byte key1 = macAddr[bitCount];
+		byte key1 = macAddr[bitCount % macAddr.length];
 		return (byte)(key1 ^ ramdom2);
 	}
 
