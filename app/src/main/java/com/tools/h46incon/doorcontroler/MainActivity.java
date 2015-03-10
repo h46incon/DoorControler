@@ -293,6 +293,7 @@ public class MainActivity extends ActionBarActivity {
 		btSocket = null;
 		btSocketIn = null;
 		btSocketOut = null;
+		btDevice = null;
 	}
 
 	private void showWrongDeviceDialog()
@@ -347,7 +348,7 @@ public class MainActivity extends ActionBarActivity {
 				return connectBTSSPSocket(btDevice);
 			}
 		};
-		connectSocketTask.timeout = 30 * 1000;      // 10s
+		connectSocketTask.timeout = 30 * 1000;      // 30s
 
 		// Dev shake hand task
 		final SerialBGWorker.taskInfo devShakeTask = new SerialBGWorker.taskInfo();
@@ -391,7 +392,7 @@ public class MainActivity extends ActionBarActivity {
 							needContinue = true;
 							break;
 						}
-						// fall down
+						// else fall down to try again
 					case TIME_OUT:
 						if (triedTimes < maxTryTimes) {
 							// try again
@@ -529,36 +530,149 @@ public class MainActivity extends ActionBarActivity {
 		}
 	}
 
-	private boolean openDoor()
+	// This function will show the pin input dialog
+	private void openDoor()
 	{
-		outputConsole.printNewItem("正在发送开门指令...");
+		PinInputDialog pinInputDialog = new PinInputDialog();
+		pinInputDialog.setOnPinInputFinish(new PinInputDialog.OnPinInputFinish() {
+			@Override
+			public void onFinish(boolean isSuccess, final char[] input)
+			{
+				mHandler.post(new Runnable() {
+					@Override
+					public void run()
+					{
+						doOpenDoor(input);
+					}
+				});
 
-		if (btSocketIn == null || btSocketOut == null) {
-			return false;
-		}
+			}
+		});
+		pinInputDialog.show(getFragmentManager(), "PinInputDialog");
+	}
 
-		int byteRead = -1;
-		try {
-			btSocketOut.write(0x38);
-			// TODO
-			MyApp.showSimpleToast("指令已发送，等待回应");
-			byteRead = btSocketIn.read();
-		} catch (IOException e) {
-			outputConsole.append("失败！（通信出错）");
-			e.printStackTrace();
-			return false;
-		}
+	private void doOpenDoor(final char[] key)
+	{
+		outputConsole.printNewItem("正在尝试开门");
 
-		if (byteRead != 0x83) {
-			Log.e(TAG, "Key error when opening door");
-			outputConsole.append("失败！（密码错误？）");
-			return false;
-		} else {
-			Log.i(TAG, "Door open successful");
-			outputConsole.append("成功");
-			stateManager.changeState(State.EXIT);
-			return true;
-		}
+		final SerialBGWorker serialBGWorker = new SerialBGWorker(this);
+
+		// socket connect task
+		SerialBGWorker.taskInfo deviceVerifyTask = new SerialBGWorker.taskInfo();
+		deviceVerifyTask.message = "正在验证设备...";
+		deviceVerifyTask.onPerWorkFinished = new SerialBGWorker.OnPerWorkFinished() {
+			@Override
+			public boolean onPerWorkFinished(BGWorker.WorkState state, Object reslut)
+			{
+				switch (state) {
+					case SUCCESS:
+						if ((Boolean) reslut) {
+							outputConsole.printNewItem("设备验证成功");
+							return true;
+						} else {
+							outputConsole.printNewItem("设备验证失败(设备未正确回应）");
+							return false;
+						}
+
+					case EXCEPTION:
+						outputConsole.printNewItem("设备验证失败(通信出错）");
+						return false;
+
+					case CANCEL:
+						return false;
+
+					case TIME_OUT:
+						outputConsole.printNewItem("设备验证失败(设备无回应）");
+						return false;
+
+					default:
+						Log.w(TAG, "Unhandled return state when device verifying");
+						return false;
+				}
+			}
+		};
+		deviceVerifyTask.task = new Callable() {
+			@Override
+			public Object call() throws Exception
+			{
+				return deviceTalker.verifyDevice();
+			}
+		};
+		deviceVerifyTask.timeout = 10 * 1000;      // 10s
+
+		// Dev shake hand task
+		SerialBGWorker.taskInfo openDoorTask = new SerialBGWorker.taskInfo();
+		openDoorTask.message = "正在发送开门指令...";
+		openDoorTask.onPerWorkFinished = new SerialBGWorker.OnPerWorkFinished() {
+			@Override
+			public boolean onPerWorkFinished(BGWorker.WorkState state, Object reslut)
+			{
+				switch (state) {
+					case SUCCESS:
+						if ((Boolean) reslut) {
+							outputConsole.printNewItem("开门成功");
+							mHandler.post(new Runnable() {
+								@Override
+								public void run()
+								{
+									stateManager.changeState(State.EXIT);
+									MyApp.showSimpleToast("理论上，门应该开了");
+								}
+							});
+							mHandler.postDelayed(new Runnable() {
+								@Override
+								public void run()
+								{
+									exitingWithTurnOffBTDialog.show();
+								}
+							}, 2000);
+							return true;
+						} else {
+							mHandler.post(new Runnable() {
+								@Override
+								public void run()
+								{
+									AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+									builder.setMessage("手抖了吗？");
+									builder.setTitle("密码错误");
+									builder.setCancelable(true);
+									builder.create().show();
+								}
+							});
+							outputConsole.printNewItem("开门失败(密码错误）");
+							return false;
+						}
+
+					case EXCEPTION:
+						outputConsole.printNewItem("设备验证失败(通信出错）");
+						return false;
+
+					case CANCEL:
+						return false;
+
+					case TIME_OUT:
+						outputConsole.printNewItem("设备验证失败(设备无回应）");
+						return false;
+
+					default:
+						Log.w(TAG, "Unhandled return state when device verifying");
+						return false;
+				}
+			}
+		};
+		openDoorTask.task = new Callable() {
+			@Override
+			public Object call() throws Exception
+			{
+				return deviceTalker.openDoor(key);
+			}
+		};
+		openDoorTask.timeout = 10 * 1000;      // 10s
+
+		serialBGWorker.addTask(deviceVerifyTask);
+		serialBGWorker.addTask(openDoorTask);
+		serialBGWorker.start();
+
 	}
 
 	private final String TAG = "MainActivity";
