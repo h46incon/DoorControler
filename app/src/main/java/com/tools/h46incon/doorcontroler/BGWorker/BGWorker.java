@@ -132,5 +132,7 @@ public class BGWorker {
 	private final AtomicBoolean isCallbackRunned = new AtomicBoolean(false);
 
 	private static Handler mainHandler = new Handler(MyApp.getContext().getMainLooper());
-	private static ExecutorService singleThreadPool = Executors.newSingleThreadExecutor();
+	// use single thread pool may cause some error when run this class after many times.
+	//private static ExecutorService singleThreadPool = Executors.newSingleThreadExecutor();
+	private static ExecutorService singleThreadPool = Executors.newCachedThreadPool();
 }
