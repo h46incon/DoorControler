@@ -247,6 +247,7 @@ public class MainActivity extends ActionBarActivity {
 
 	private void connectBTDev()
 	{
+		btDisconnect();
 		BTDiscoveryDialog btDiscoveryDialog = new BTDiscoveryDialog();
 		btDiscoveryDialog.setOnDevSelectListener(
 				new BTDiscoveryDialog.OnDevSelect() {
@@ -272,22 +273,30 @@ public class MainActivity extends ActionBarActivity {
 
 	private void btDisconnect()
 	{
+		// All socket stream and socket must be closed,
+		// these code must not run in the same try-catch block
 		try {
 			if (btSocketIn != null) {
 				btSocketIn.close();
 			}
+		} catch (IOException e) {
+			//e.printStackTrace();
+		}
+
+		try {
 			if (btSocketOut != null) {
 				btSocketOut.close();
 			}
 		} catch (IOException e) {
-			e.printStackTrace();
+			//e.printStackTrace();
 		}
+
 		try {
 			if (btSocket != null) {
 				btSocket.close();
 			}
 		} catch (IOException e) {
-			e.printStackTrace();
+			//e.printStackTrace();
 		}
 
 		btSocket = null;
@@ -307,6 +316,16 @@ public class MainActivity extends ActionBarActivity {
 				.show();
 	}
 
+	private void showWrongKeyDialog()
+	{
+		AlertDialog.Builder builder = new AlertDialog.Builder(this);
+		builder .setTitle("密码错误")
+				.setIcon(android.R.drawable.ic_dialog_alert)
+				.setMessage("手抖了吗？")
+				.setCancelable(true)
+				.setPositiveButton("确定", null)
+				.show();
+	}
 	// connected device
 	// It will finish bluetooth device connection and hand shaking work
 	private void connectDoorCtrlDevice(final BluetoothDevice btDevice)
@@ -625,18 +644,14 @@ public class MainActivity extends ActionBarActivity {
 								{
 									exitingWithTurnOffBTDialog.show();
 								}
-							}, 2000);
+							}, 1000);
 							return true;
 						} else {
 							mHandler.post(new Runnable() {
 								@Override
 								public void run()
 								{
-									AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-									builder.setMessage("手抖了吗？");
-									builder.setTitle("密码错误");
-									builder.setCancelable(true);
-									builder.create().show();
+									showWrongKeyDialog();
 								}
 							});
 							outputConsole.printNewItem("开门失败(密码错误）");
