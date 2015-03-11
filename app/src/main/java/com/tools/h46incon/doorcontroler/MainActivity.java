@@ -144,6 +144,414 @@ public class MainActivity extends ActionBarActivity {
 		private ImageView exitArrowIV;
 	}
 
+	private class BTDeviceConnector{
+
+		public void btDisconnect()
+		{
+			// All socket stream and socket must be closed,
+			// these code must not run in the same try-catch block
+			try {
+				if (btSocketIn != null) {
+					btSocketIn.close();
+				}
+			} catch (IOException e) {
+				//e.printStackTrace();
+			}
+
+			try {
+				if (btSocketOut != null) {
+					btSocketOut.close();
+				}
+			} catch (IOException e) {
+				//e.printStackTrace();
+			}
+
+			try {
+				if (btSocket != null) {
+					btSocket.close();
+				}
+			} catch (IOException e) {
+				//e.printStackTrace();
+			}
+
+			btSocket = null;
+			btSocketIn = null;
+			btSocketOut = null;
+			btDevice = null;
+		}
+
+		private void showWrongDeviceDialog()
+		{
+			AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+			builder .setTitle("握手失败")
+					.setIcon(android.R.drawable.ic_dialog_alert)
+					.setMessage("是否连错蓝牙？")
+					.setCancelable(true)
+					.setPositiveButton("确定", null)
+					.show();
+		}
+
+		private void showWrongKeyDialog()
+		{
+			AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+			builder .setTitle("密码错误")
+					.setIcon(android.R.drawable.ic_dialog_alert)
+					.setMessage("手抖了吗？")
+					.setCancelable(true)
+					.setPositiveButton("确定", null)
+					.show();
+		}
+		// connected device
+		// It will finish bluetooth device connection and hand shaking work
+		private void connectDoorCtrlDevice(final BluetoothDevice btDevice)
+		{
+
+			outputConsole.printNewItem(
+					String.format("正在尝试连接蓝牙设备: %s (%s)", btDevice.getName(), btDevice.getAddress()));
+
+
+			outputConsole.indent();
+
+			final SerialBGWorker serialBGWorker = new SerialBGWorker(MainActivity.this);
+
+			// socket connect task
+			SerialBGWorker.taskInfo connectSocketTask = new SerialBGWorker.taskInfo();
+			connectSocketTask.message = "正在建立连接...";
+			connectSocketTask.onPerWorkFinished = new SerialBGWorker.OnPerWorkFinished() {
+				@Override
+				public boolean onPerWorkFinished(BGWorker.WorkState state, Object reslut)
+				{
+					boolean needContinue = false;
+					if ((state == BGWorker.WorkState.SUCCESS) && (Boolean) reslut) {
+						// This step will be finished in some millisecond
+						needContinue = getSocketStream();
+					}
+					if (needContinue) {
+						return true;
+					} else {
+						outputConsole.unIndent();
+						outputConsole.printNewItem("连接设备失败");
+						return false;
+					}
+				}
+			};
+			connectSocketTask.task = new Callable() {
+				@Override
+				public Object call() throws Exception
+				{
+					return connectBTSSPSocket(btDevice);
+				}
+			};
+			connectSocketTask.timeout = 30 * 1000;      // 30s
+
+			// Dev shake hand task
+			final SerialBGWorker.taskInfo devShakeTask = new SerialBGWorker.taskInfo();
+			final int maxTryTimes = 3;         // try 5 times when failed
+			final String shakeHandMsgFormat = "正在尝试第(%d/%d)次握手...";
+			devShakeTask.message = String.format(shakeHandMsgFormat, 1, maxTryTimes);
+			devShakeTask.task = new Callable() {
+				@Override
+				public Object call() throws Exception
+				{
+					// need some time to let it wake up
+					try {
+						Thread.sleep(1000);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+					return devShakeHand();
+				}
+			};
+			devShakeTask.onPerWorkFinished = new SerialBGWorker.OnPerWorkFinished() {
+
+				int triedTimes = 0;
+				@Override
+				public boolean onPerWorkFinished(BGWorker.WorkState state, Object reslut)
+				{
+					boolean needContinue = false;
+					++triedTimes;
+					switch (state) {
+						case SUCCESS:
+							if ((Boolean) reslut) {
+								outputConsole.unIndent();
+								// Changing UI.
+								mHandler.post(new Runnable() {
+									@Override
+									public void run()
+									{
+										stateManager.changeState(State.OPEN_DOOR);
+										outputConsole.printNewItem("连接设备成功");
+									}
+								});
+								needContinue = true;
+								break;
+							}
+							// else fall down to try again
+						case TIME_OUT:
+							if (triedTimes < maxTryTimes) {
+								// try again
+								devShakeTask.message = String.format(shakeHandMsgFormat, triedTimes+1, maxTryTimes);
+								serialBGWorker.addTaskInFirst(devShakeTask);
+								needContinue = true;
+							} else {
+								showWrongDeviceDialog();
+								needContinue = false;
+							}
+							break;
+
+						case EXCEPTION:
+							Log.e(TAG, "exception in device shaking, stop trying.");
+							needContinue = false;
+							break;
+
+						case CANCEL:
+							needContinue = false;
+							break;
+
+						default:
+							Log.w(TAG, "Unhandled state in callback of device shake hand");
+							needContinue = true;
+							break;
+					}
+
+					if (needContinue) {
+						return true;
+					} else {
+						btDisconnect();
+						outputConsole.unIndent();
+						outputConsole.printNewItem("连接设备失败");
+						return false;
+					}
+				}
+			};
+			devShakeTask.timeout = 10 * 1000;
+
+
+			serialBGWorker.addTask(connectSocketTask);
+			serialBGWorker.addTask(devShakeTask);
+			serialBGWorker.start();
+
+		}
+
+
+		private boolean connectBTSSPSocket(final BluetoothDevice device)
+		{
+			// Try to create a SSP socket
+			// This step will be finished in some millisecond
+			try {
+				btSocket = device.createRfcommSocketToServiceRecord(BlueToothSSPUUID);
+			} catch (IOException e) {
+				btSocket = null;
+				Log.e(TAG, "Can not create BlueTooth socket!");
+				outputConsole.printNewItem("获取蓝牙串口Socket失败！");
+				e.printStackTrace();
+				return false;
+			}
+
+
+			// Try to connect this socket
+			try {
+				btSocket.connect();
+			} catch (IOException e) {
+				try {
+					btSocket.close();
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
+				btSocket = null;
+				Log.e(TAG, "Can not connect BT socket!");
+				outputConsole.printNewItem("Socket连接...失败！");
+				e.printStackTrace();
+				return false;
+			}
+
+			btDevice = device;
+			outputConsole.printNewItem("Socket连接...成功");
+			return true;
+		}
+
+		private boolean getSocketStream()
+		{
+			// Check null~~
+			if (btSocket == null || !btSocket.isConnected()) {
+				btSocketIn = null;
+				btSocketOut = null;
+				Log.e(TAG, "Bluetooth socket is null or not connected");
+				return false;
+			}
+
+			outputConsole.printNewItem("获取Socket输入流...");
+			try {
+				btSocketIn = btSocket.getInputStream();
+				btSocketOut = btSocket.getOutputStream();
+			} catch (IOException e) {
+				btDisconnect();
+				outputConsole.append("失败!");
+				Log.e(TAG, "Cannot get bluetooth socket's input or output stream");
+				e.printStackTrace();
+				return false;
+			}
+			outputConsole.append("成功");
+
+			return true;
+		}
+
+		private boolean devShakeHand()
+		{
+			if (btSocketIn == null || btSocketOut == null) {
+				Log.d(TAG, "Bluetooth socket is null");
+				return false;
+			}
+
+			deviceTalker.setStream(btDevice.getAddress(), btSocketIn, btSocketOut);
+
+			outputConsole.printNewItem("正在进行设备握手...");
+			try {
+				if (deviceTalker.shakeHand()) {
+					Log.i(TAG, "Device shake hand successful");
+					outputConsole.append("成功");
+					return true;
+				} else {
+					Log.e(TAG, "Device respond is error when shaking hand");
+					outputConsole.append("失败！（设备未正确回应）");
+					return false;
+				}
+			} catch (IOException e) {
+				btDisconnect();
+				outputConsole.append("失败！（通信出错）");
+				e.printStackTrace();
+				return false;
+			}
+		}
+
+		public void doOpenDoor(final char[] key)
+		{
+			outputConsole.printNewItem("正在尝试开门");
+
+			final SerialBGWorker serialBGWorker = new SerialBGWorker(MainActivity.this);
+
+			// socket connect task
+			SerialBGWorker.taskInfo deviceVerifyTask = new SerialBGWorker.taskInfo();
+			deviceVerifyTask.message = "正在验证设备...";
+			deviceVerifyTask.onPerWorkFinished = new SerialBGWorker.OnPerWorkFinished() {
+				@Override
+				public boolean onPerWorkFinished(BGWorker.WorkState state, Object reslut)
+				{
+					switch (state) {
+						case SUCCESS:
+							if ((Boolean) reslut) {
+								outputConsole.printNewItem("设备验证成功");
+								return true;
+							} else {
+								outputConsole.printNewItem("设备验证失败(设备未正确回应）");
+								return false;
+							}
+
+						case EXCEPTION:
+							outputConsole.printNewItem("设备验证失败(通信出错）");
+							return false;
+
+						case CANCEL:
+							return false;
+
+						case TIME_OUT:
+							outputConsole.printNewItem("设备验证失败(设备无回应）");
+							return false;
+
+						default:
+							Log.w(TAG, "Unhandled return state when device verifying");
+							return false;
+					}
+				}
+			};
+			deviceVerifyTask.task = new Callable() {
+				@Override
+				public Object call() throws Exception
+				{
+					return deviceTalker.verifyDevice();
+				}
+			};
+			deviceVerifyTask.timeout = 10 * 1000;      // 10s
+
+			// Dev shake hand task
+			SerialBGWorker.taskInfo openDoorTask = new SerialBGWorker.taskInfo();
+			openDoorTask.message = "正在发送开门指令...";
+			openDoorTask.onPerWorkFinished = new SerialBGWorker.OnPerWorkFinished() {
+				@Override
+				public boolean onPerWorkFinished(BGWorker.WorkState state, Object reslut)
+				{
+					switch (state) {
+						case SUCCESS:
+							if ((Boolean) reslut) {
+								outputConsole.printNewItem("开门成功");
+								mHandler.post(new Runnable() {
+									@Override
+									public void run()
+									{
+										stateManager.changeState(State.EXIT);
+										MyApp.showSimpleToast("理论上，门应该开了");
+									}
+								});
+								mHandler.postDelayed(new Runnable() {
+									@Override
+									public void run()
+									{
+										exitingWithTurnOffBTDialog.show();
+									}
+								}, 1000);
+								return true;
+							} else {
+								mHandler.post(new Runnable() {
+									@Override
+									public void run()
+									{
+										showWrongKeyDialog();
+									}
+								});
+								outputConsole.printNewItem("开门失败(密码错误）");
+								return false;
+							}
+
+						case EXCEPTION:
+							outputConsole.printNewItem("设备验证失败(通信出错）");
+							return false;
+
+						case CANCEL:
+							return false;
+
+						case TIME_OUT:
+							outputConsole.printNewItem("设备验证失败(设备无回应）");
+							return false;
+
+						default:
+							Log.w(TAG, "Unhandled return state when device verifying");
+							return false;
+					}
+				}
+			};
+			openDoorTask.task = new Callable() {
+				@Override
+				public Object call() throws Exception
+				{
+					return deviceTalker.openDoor(key);
+				}
+			};
+			openDoorTask.timeout = 10 * 1000;      // 10s
+
+			serialBGWorker.addTask(deviceVerifyTask);
+			serialBGWorker.addTask(openDoorTask);
+			serialBGWorker.start();
+
+		}
+
+		private final UUID BlueToothSSPUUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
+		private BluetoothDevice btDevice;
+		private BluetoothSocket btSocket;
+		private InputStream btSocketIn;
+		private OutputStream btSocketOut;
+		DeviceTalker deviceTalker = new DeviceTalker();
+
+	}
 	@Override
 	protected void onCreate(Bundle savedInstanceState)
 	{
@@ -247,7 +655,7 @@ public class MainActivity extends ActionBarActivity {
 
 	private void connectBTDev()
 	{
-		btDisconnect();
+		btDeviceConnector.btDisconnect();
 		BTDiscoveryDialog btDiscoveryDialog = new BTDiscoveryDialog();
 		btDiscoveryDialog.setOnDevSelectListener(
 				new BTDiscoveryDialog.OnDevSelect() {
@@ -255,298 +663,11 @@ public class MainActivity extends ActionBarActivity {
 					public void onDevSelect(final BluetoothDevice device)
 					{
 						Log.d(TAG, "received selected device " + device.getAddress());
-						connectDoorCtrlDevice(device);
+						btDeviceConnector.connectDoorCtrlDevice(device);
 					}
 				}
 		);
 		btDiscoveryDialog.show(getFragmentManager(), "btDiscoveryDialog");
-	}
-
-	private void exiting()
-	{
-		if (btAdapter.isEnabled()) {
-			exitingWithTurnOffBTDialog.show();
-		} else {
-			this.finish();
-		}
-	}
-
-	private void btDisconnect()
-	{
-		// All socket stream and socket must be closed,
-		// these code must not run in the same try-catch block
-		try {
-			if (btSocketIn != null) {
-				btSocketIn.close();
-			}
-		} catch (IOException e) {
-			//e.printStackTrace();
-		}
-
-		try {
-			if (btSocketOut != null) {
-				btSocketOut.close();
-			}
-		} catch (IOException e) {
-			//e.printStackTrace();
-		}
-
-		try {
-			if (btSocket != null) {
-				btSocket.close();
-			}
-		} catch (IOException e) {
-			//e.printStackTrace();
-		}
-
-		btSocket = null;
-		btSocketIn = null;
-		btSocketOut = null;
-		btDevice = null;
-	}
-
-	private void showWrongDeviceDialog()
-	{
-		AlertDialog.Builder builder = new AlertDialog.Builder(this);
-		builder .setTitle("握手失败")
-				.setIcon(android.R.drawable.ic_dialog_alert)
-				.setMessage("是否连错蓝牙？")
-				.setCancelable(true)
-				.setPositiveButton("确定", null)
-				.show();
-	}
-
-	private void showWrongKeyDialog()
-	{
-		AlertDialog.Builder builder = new AlertDialog.Builder(this);
-		builder .setTitle("密码错误")
-				.setIcon(android.R.drawable.ic_dialog_alert)
-				.setMessage("手抖了吗？")
-				.setCancelable(true)
-				.setPositiveButton("确定", null)
-				.show();
-	}
-	// connected device
-	// It will finish bluetooth device connection and hand shaking work
-	private void connectDoorCtrlDevice(final BluetoothDevice btDevice)
-	{
-
-		outputConsole.printNewItem(
-				String.format("正在尝试连接蓝牙设备: %s (%s)", btDevice.getName(), btDevice.getAddress()));
-
-
-		outputConsole.indent();
-
-		final SerialBGWorker serialBGWorker = new SerialBGWorker(this);
-
-		// socket connect task
-		SerialBGWorker.taskInfo connectSocketTask = new SerialBGWorker.taskInfo();
-		connectSocketTask.message = "正在建立连接...";
-		connectSocketTask.onPerWorkFinished = new SerialBGWorker.OnPerWorkFinished() {
-			@Override
-			public boolean onPerWorkFinished(BGWorker.WorkState state, Object reslut)
-			{
-				boolean needContinue = false;
-				if ((state == BGWorker.WorkState.SUCCESS) && (Boolean) reslut) {
-					// This step will be finished in some millisecond
-					needContinue = getSocketStream();
-				}
-				if (needContinue) {
-					return true;
-				} else {
-					outputConsole.unIndent();
-					outputConsole.printNewItem("连接设备失败");
-					return false;
-				}
-			}
-		};
-		connectSocketTask.task = new Callable() {
-			@Override
-			public Object call() throws Exception
-			{
-				return connectBTSSPSocket(btDevice);
-			}
-		};
-		connectSocketTask.timeout = 30 * 1000;      // 30s
-
-		// Dev shake hand task
-		final SerialBGWorker.taskInfo devShakeTask = new SerialBGWorker.taskInfo();
-		final int maxTryTimes = 3;         // try 5 times when failed
-		final String shakeHandMsgFormat = "正在尝试第(%d/%d)次握手...";
-		devShakeTask.message = String.format(shakeHandMsgFormat, 1, maxTryTimes);
-		devShakeTask.task = new Callable() {
-			@Override
-			public Object call() throws Exception
-			{
-				// need some time to let it wake up
-				try {
-					Thread.sleep(1000);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-				return devShakeHand();
-			}
-		};
-		devShakeTask.onPerWorkFinished = new SerialBGWorker.OnPerWorkFinished() {
-
-			int triedTimes = 0;
-			@Override
-			public boolean onPerWorkFinished(BGWorker.WorkState state, Object reslut)
-			{
-				boolean needContinue = false;
-				++triedTimes;
-				switch (state) {
-					case SUCCESS:
-						if ((Boolean) reslut) {
-							outputConsole.unIndent();
-							// Changing UI.
-							mHandler.post(new Runnable() {
-								@Override
-								public void run()
-								{
-									stateManager.changeState(State.OPEN_DOOR);
-									outputConsole.printNewItem("连接设备成功");
-								}
-							});
-							needContinue = true;
-							break;
-						}
-						// else fall down to try again
-					case TIME_OUT:
-						if (triedTimes < maxTryTimes) {
-							// try again
-							devShakeTask.message = String.format(shakeHandMsgFormat, triedTimes+1, maxTryTimes);
-							serialBGWorker.addTaskInFirst(devShakeTask);
-							needContinue = true;
-						} else {
-							showWrongDeviceDialog();
-							needContinue = false;
-						}
-						break;
-
-					case EXCEPTION:
-						Log.e(TAG, "exception in device shaking, stop trying.");
-						needContinue = false;
-						break;
-
-					case CANCEL:
-						needContinue = false;
-						break;
-
-					default:
-						Log.w(TAG, "Unhandled state in callback of device shake hand");
-						needContinue = true;
-						break;
-				}
-
-				if (needContinue) {
-					return true;
-				} else {
-					btDisconnect();
-					outputConsole.unIndent();
-					outputConsole.printNewItem("连接设备失败");
-					return false;
-				}
-			}
-		};
-		devShakeTask.timeout = 10 * 1000;
-
-
-		serialBGWorker.addTask(connectSocketTask);
-		serialBGWorker.addTask(devShakeTask);
-		serialBGWorker.start();
-
-	}
-
-
-	private boolean connectBTSSPSocket(final BluetoothDevice device)
-	{
-		// Try to create a SSP socket
-		// This step will be finished in some millisecond
-		try {
-			btSocket = device.createRfcommSocketToServiceRecord(BlueToothSSPUUID);
-		} catch (IOException e) {
-			btSocket = null;
-			Log.e(TAG, "Can not create BlueTooth socket!");
-			outputConsole.printNewItem("获取蓝牙串口Socket失败！");
-			e.printStackTrace();
-			return false;
-		}
-
-
-		// Try to connect this socket
-		try {
-			btSocket.connect();
-		} catch (IOException e) {
-			try {
-				btSocket.close();
-			} catch (IOException e1) {
-				e1.printStackTrace();
-			}
-			btSocket = null;
-			Log.e(TAG, "Can not connect BT socket!");
-			outputConsole.printNewItem("Socket连接...失败！");
-			e.printStackTrace();
-			return false;
-		}
-
-		btDevice = device;
-		outputConsole.printNewItem("Socket连接...成功");
-		return true;
-	}
-
-	private boolean getSocketStream()
-	{
-		// Check null~~
-		if (btSocket == null || !btSocket.isConnected()) {
-			btSocketIn = null;
-			btSocketOut = null;
-			Log.e(TAG, "Bluetooth socket is null or not connected");
-			return false;
-		}
-
-		outputConsole.printNewItem("获取Socket输入流...");
-		try {
-			btSocketIn = btSocket.getInputStream();
-			btSocketOut = btSocket.getOutputStream();
-		} catch (IOException e) {
-			btDisconnect();
-			outputConsole.append("失败!");
-			Log.e(TAG, "Cannot get bluetooth socket's input or output stream");
-			e.printStackTrace();
-			return false;
-		}
-		outputConsole.append("成功");
-
-		return true;
-	}
-
-	private boolean devShakeHand()
-	{
-		if (btSocketIn == null || btSocketOut == null) {
-			Log.d(TAG, "Bluetooth socket is null");
-			return false;
-		}
-
-		deviceTalker.setStream(btDevice.getAddress(), btSocketIn, btSocketOut);
-
-		outputConsole.printNewItem("正在进行设备握手...");
-		try {
-			if (deviceTalker.shakeHand()) {
-				Log.i(TAG, "Device shake hand successful");
-				outputConsole.append("成功");
-				return true;
-			} else {
-				Log.e(TAG, "Device respond is error when shaking hand");
-				outputConsole.append("失败！（设备未正确回应）");
-				return false;
-			}
-		} catch (IOException e) {
-			btDisconnect();
-			outputConsole.append("失败！（通信出错）");
-			e.printStackTrace();
-			return false;
-		}
 	}
 
 	// This function will show the pin input dialog
@@ -561,7 +682,7 @@ public class MainActivity extends ActionBarActivity {
 					@Override
 					public void run()
 					{
-						doOpenDoor(input);
+						btDeviceConnector.doOpenDoor(input);
 					}
 				});
 
@@ -570,139 +691,23 @@ public class MainActivity extends ActionBarActivity {
 		pinInputDialog.show(getFragmentManager(), "PinInputDialog");
 	}
 
-	private void doOpenDoor(final char[] key)
+	private void exiting()
 	{
-		outputConsole.printNewItem("正在尝试开门");
-
-		final SerialBGWorker serialBGWorker = new SerialBGWorker(this);
-
-		// socket connect task
-		SerialBGWorker.taskInfo deviceVerifyTask = new SerialBGWorker.taskInfo();
-		deviceVerifyTask.message = "正在验证设备...";
-		deviceVerifyTask.onPerWorkFinished = new SerialBGWorker.OnPerWorkFinished() {
-			@Override
-			public boolean onPerWorkFinished(BGWorker.WorkState state, Object reslut)
-			{
-				switch (state) {
-					case SUCCESS:
-						if ((Boolean) reslut) {
-							outputConsole.printNewItem("设备验证成功");
-							return true;
-						} else {
-							outputConsole.printNewItem("设备验证失败(设备未正确回应）");
-							return false;
-						}
-
-					case EXCEPTION:
-						outputConsole.printNewItem("设备验证失败(通信出错）");
-						return false;
-
-					case CANCEL:
-						return false;
-
-					case TIME_OUT:
-						outputConsole.printNewItem("设备验证失败(设备无回应）");
-						return false;
-
-					default:
-						Log.w(TAG, "Unhandled return state when device verifying");
-						return false;
-				}
-			}
-		};
-		deviceVerifyTask.task = new Callable() {
-			@Override
-			public Object call() throws Exception
-			{
-				return deviceTalker.verifyDevice();
-			}
-		};
-		deviceVerifyTask.timeout = 10 * 1000;      // 10s
-
-		// Dev shake hand task
-		SerialBGWorker.taskInfo openDoorTask = new SerialBGWorker.taskInfo();
-		openDoorTask.message = "正在发送开门指令...";
-		openDoorTask.onPerWorkFinished = new SerialBGWorker.OnPerWorkFinished() {
-			@Override
-			public boolean onPerWorkFinished(BGWorker.WorkState state, Object reslut)
-			{
-				switch (state) {
-					case SUCCESS:
-						if ((Boolean) reslut) {
-							outputConsole.printNewItem("开门成功");
-							mHandler.post(new Runnable() {
-								@Override
-								public void run()
-								{
-									stateManager.changeState(State.EXIT);
-									MyApp.showSimpleToast("理论上，门应该开了");
-								}
-							});
-							mHandler.postDelayed(new Runnable() {
-								@Override
-								public void run()
-								{
-									exitingWithTurnOffBTDialog.show();
-								}
-							}, 1000);
-							return true;
-						} else {
-							mHandler.post(new Runnable() {
-								@Override
-								public void run()
-								{
-									showWrongKeyDialog();
-								}
-							});
-							outputConsole.printNewItem("开门失败(密码错误）");
-							return false;
-						}
-
-					case EXCEPTION:
-						outputConsole.printNewItem("设备验证失败(通信出错）");
-						return false;
-
-					case CANCEL:
-						return false;
-
-					case TIME_OUT:
-						outputConsole.printNewItem("设备验证失败(设备无回应）");
-						return false;
-
-					default:
-						Log.w(TAG, "Unhandled return state when device verifying");
-						return false;
-				}
-			}
-		};
-		openDoorTask.task = new Callable() {
-			@Override
-			public Object call() throws Exception
-			{
-				return deviceTalker.openDoor(key);
-			}
-		};
-		openDoorTask.timeout = 10 * 1000;      // 10s
-
-		serialBGWorker.addTask(deviceVerifyTask);
-		serialBGWorker.addTask(openDoorTask);
-		serialBGWorker.start();
-
+		if (btAdapter.isEnabled()) {
+			exitingWithTurnOffBTDialog.show();
+		} else {
+			this.finish();
+		}
 	}
 
+
 	private final String TAG = "MainActivity";
-	private final UUID BlueToothSSPUUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
 
 	private OutputConsole outputConsole;
 
-	private BluetoothDevice btDevice;
-	private BluetoothSocket btSocket;
-	private InputStream btSocketIn;
-	private OutputStream btSocketOut;
-	DeviceTalker deviceTalker = new DeviceTalker();
-
 	private AlertDialog exitingWithTurnOffBTDialog;
 	private StateManager stateManager;
+	private BTDeviceConnector btDeviceConnector = new BTDeviceConnector();
 	private BluetoothAdapter btAdapter;
 	private Handler mHandler = new Handler();
 
