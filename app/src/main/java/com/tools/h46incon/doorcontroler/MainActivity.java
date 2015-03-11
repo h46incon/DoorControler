@@ -145,7 +145,6 @@ public class MainActivity extends ActionBarActivity {
 	}
 
 	private class BTDeviceConnector{
-
 		private BTDeviceConnector()
 		{
 			initBGTask();
@@ -310,24 +309,12 @@ public class MainActivity extends ActionBarActivity {
 
 		private void showWrongDeviceDialog()
 		{
-			AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-			builder .setTitle("握手失败")
-					.setIcon(android.R.drawable.ic_dialog_alert)
-					.setMessage("是否连错蓝牙？")
-					.setCancelable(true)
-					.setPositiveButton("确定", null)
-					.show();
+			showAlertDialog("握手失败", "是否连错蓝牙");
 		}
 
 		private void showWrongKeyDialog()
 		{
-			AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-			builder .setTitle("密码错误")
-					.setIcon(android.R.drawable.ic_dialog_alert)
-					.setMessage("手抖了吗？")
-					.setCancelable(true)
-					.setPositiveButton("确定", null)
-					.show();
+			showAlertDialog("密码错误", "手抖了吗");
 		}
 		// connected device
 		// It will finish bluetooth device connection and hand shaking work
@@ -560,6 +547,17 @@ public class MainActivity extends ActionBarActivity {
 		DeviceTalker deviceTalker = new DeviceTalker();
 
 		SerialBGWorker.taskInfo deviceVerifyTask;
+	}
+
+	private void showAlertDialog(CharSequence title, CharSequence message)
+	{
+		AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+		builder .setTitle(title)
+				.setIcon(android.R.drawable.ic_dialog_alert)
+				.setMessage(message)
+				.setCancelable(true)
+				//.setPositiveButton("确定", null)
+				.show();
 	}
 	@Override
 	protected void onCreate(Bundle savedInstanceState)
