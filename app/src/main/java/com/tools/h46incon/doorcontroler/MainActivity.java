@@ -217,7 +217,7 @@ public class MainActivity extends ActionBarActivity {
 			// socket connect task
 			SerialBGWorker.taskInfo connectSocketTask = new SerialBGWorker.taskInfo();
 			connectSocketTask.message = "正在建立连接...";
-			connectSocketTask.onPerWorkFinished = new SerialBGWorker.OnPerWorkFinished() {
+			connectSocketTask.onWorkFinished = new SerialBGWorker.OnPerWorkFinished() {
 				@Override
 				public boolean onPerWorkFinished(BGWorker.WorkState state, Object reslut)
 				{
@@ -262,7 +262,7 @@ public class MainActivity extends ActionBarActivity {
 					return devShakeHand();
 				}
 			};
-			devShakeTask.onPerWorkFinished = new SerialBGWorker.OnPerWorkFinished() {
+			devShakeTask.onWorkFinished = new SerialBGWorker.OnPerWorkFinished() {
 
 				int triedTimes = 0;
 				@Override
@@ -433,7 +433,7 @@ public class MainActivity extends ActionBarActivity {
 			// socket connect task
 			SerialBGWorker.taskInfo deviceVerifyTask = new SerialBGWorker.taskInfo();
 			deviceVerifyTask.message = "正在验证设备...";
-			deviceVerifyTask.onPerWorkFinished = new SerialBGWorker.OnPerWorkFinished() {
+			deviceVerifyTask.onWorkFinished = new SerialBGWorker.OnPerWorkFinished() {
 				@Override
 				public boolean onPerWorkFinished(BGWorker.WorkState state, Object reslut)
 				{
@@ -476,7 +476,7 @@ public class MainActivity extends ActionBarActivity {
 			// Dev shake hand task
 			SerialBGWorker.taskInfo openDoorTask = new SerialBGWorker.taskInfo();
 			openDoorTask.message = "正在发送开门指令...";
-			openDoorTask.onPerWorkFinished = new SerialBGWorker.OnPerWorkFinished() {
+			openDoorTask.onWorkFinished = new SerialBGWorker.OnPerWorkFinished() {
 				@Override
 				public boolean onPerWorkFinished(BGWorker.WorkState state, Object reslut)
 				{

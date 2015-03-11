@@ -21,7 +21,7 @@ public class SerialBGWorker {
 
 	public static class taskInfo{
 		public Callable task;
-		public OnPerWorkFinished onPerWorkFinished;
+		public OnPerWorkFinished onWorkFinished;
 		public CharSequence title = null;
 		public CharSequence message = null;
 		public long timeout;
@@ -63,7 +63,7 @@ public class SerialBGWorker {
 						public void onWorkFinished(BGWorker.WorkState state, Object result)
 						{
 							boolean needContinue =
-									info.onPerWorkFinished.onPerWorkFinished(state, result);
+									info.onWorkFinished.onPerWorkFinished(state, result);
 							if (needContinue) {
 								bgThreadHandler.post(nextTaskRunner);
 							}
