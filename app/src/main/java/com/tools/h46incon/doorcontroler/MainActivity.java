@@ -14,7 +14,10 @@ import android.os.Handler;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.view.KeyEvent;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewConfiguration;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -25,6 +28,7 @@ import com.tools.h46incon.doorcontroler.BGWorker.SerialBGWorker;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.Field;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 
@@ -565,9 +569,48 @@ public class MainActivity extends ActionBarActivity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 
+		makeActionOverflowMenuShown();
 		initMember();
 		IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_ACL_DISCONNECTED);
 		registerReceiver(btDisconnectReceiver, filter);
+	}
+
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu)
+	{
+		super.onCreateOptionsMenu(menu);
+
+		MenuItem cpwdItem = menu.add("修改密码");
+		cpwdItem.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+			@Override
+			public boolean onMenuItemClick(MenuItem item)
+			{
+				if (stateManager.getCurState() == State.BT_SETTING) {
+					showAlertDialog("别急", "请先连接设备");
+				} else{
+					changeOpenDoorKey();
+				}
+				return true;
+			}
+		});
+
+
+		// return true to show menu
+		return true;
+	}
+
+	private void makeActionOverflowMenuShown() {
+		//devices with hardware menu button (e.g. Samsung Note) don't show action overflow menu
+		try {
+			ViewConfiguration config = ViewConfiguration.get(this);
+			Field menuKeyField = ViewConfiguration.class.getDeclaredField("sHasPermanentMenuKey");
+			if (menuKeyField != null) {
+				menuKeyField.setAccessible(true);
+				menuKeyField.setBoolean(config, false);
+			}
+		} catch (Exception e) {
+			Log.d(TAG, e.getLocalizedMessage());
+		}
 	}
 
 	@Override
@@ -698,6 +741,10 @@ public class MainActivity extends ActionBarActivity {
 		pinInputDialog.show(getFragmentManager(), "PinInputDialog");
 	}
 
+	private void changeOpenDoorKey()
+	{
+		// TODO:
+	}
 	private void exiting()
 	{
 		if (btAdapter.isEnabled()) {
