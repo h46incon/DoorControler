@@ -94,6 +94,8 @@ public class DeviceTalker {
 	{
 		dataBuf.clear();
 		dataBuf.put(cOpenDoor);
+		byte key_len = (byte)key.length;
+		dataBuf.put(key_len);
 		for (char k : key) {
 			dataBuf.put((byte) k);
 		}
