@@ -724,21 +724,24 @@ public class MainActivity extends ActionBarActivity {
 	private void openDoor()
 	{
 		PinInputDialog pinInputDialog = new PinInputDialog();
-		pinInputDialog.setOnPinInputFinish(new PinInputDialog.OnPinInputFinish() {
-			@Override
-			public void onFinish(boolean isSuccess, final char[] input)
-			{
-				mHandler.post(new Runnable() {
+		pinInputDialog
+				.setOnPinInputFinish(new PinInputDialog.OnPinInputFinish() {
 					@Override
-					public void run()
+					public void onFinish(boolean isSuccess, final char[] input)
 					{
-						btDeviceConnector.doOpenDoor(input);
-					}
-				});
+						mHandler.post(new Runnable() {
+							@Override
+							public void run()
+							{
+								btDeviceConnector.doOpenDoor(input);
+							}
+						});
 
-			}
-		});
-		pinInputDialog.show(getFragmentManager(), "PinInputDialog");
+					}
+				})
+				.setTitle("请输入密码")
+				.setMessage("这是一个有情怀的app")
+				.show(getFragmentManager(), "PinInputDialog");
 	}
 
 	private void changeOpenDoorKey()

@@ -16,6 +16,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.widget.TextView;
 
 /**
  * Created by h46incon on 2015/2/4.
@@ -25,9 +26,22 @@ public class PinInputDialog extends DialogFragment {
 		public void onFinish(boolean isSuccess, char[] input);
 	}
 
-	public void setOnPinInputFinish(OnPinInputFinish onPinInputFinish)
+	public PinInputDialog setOnPinInputFinish(OnPinInputFinish onPinInputFinish)
 	{
 		this.onPinInputFinish = onPinInputFinish;
+		return this;
+	}
+
+	public PinInputDialog setMessage(CharSequence message)
+	{
+		this.message = message;
+		return this;
+	}
+
+	public PinInputDialog setTitle(CharSequence title)
+	{
+		this.title = title;
+		return this;
 	}
 
 	@Override
@@ -54,6 +68,9 @@ public class PinInputDialog extends DialogFragment {
 		// Get the AlertDialog from create()
 		LayoutInflater inflater = getActivity().getLayoutInflater();
 		View rootView = inflater.inflate(R.layout.dialog_pin_input, null);
+
+		SetTextViewText(rootView, R.id.pin_box_title, this.title);
+		SetTextViewText(rootView, R.id.pin_pox_message_text, this.message);
 
 		pinBoxHighLighter = new PinBoxHighLighter(rootView);
 		keyboardView = (KeyboardView) rootView.findViewById(R.id.pin_box_keyboard);
@@ -302,6 +319,18 @@ public class PinInputDialog extends DialogFragment {
 		}
 	}
 
+	private static void SetTextViewText(View rootView, int textViewID, CharSequence text)
+	{
+		if (text != null) {
+			TextView textView = (TextView) rootView.findViewById(textViewID);
+			if (textView != null) {
+				textView.setText(text);
+			} else {
+				Log.w(TAG, "Could not find text view: " + textViewID);
+			}
+		}
+	}
+
 
 	private static final String TAG = "PinInputDialog";
 	private static final int pinNum = 6;
@@ -312,6 +341,9 @@ public class PinInputDialog extends DialogFragment {
 	private Vibrator vibrator;
 	private OnPinInputFinish onPinInputFinish = null;
 	private PinBoxHighLighter pinBoxHighLighter;
+
+	private CharSequence title;
+	private CharSequence message;
 
 	// has input success
 	private boolean hasSuccess = false;
