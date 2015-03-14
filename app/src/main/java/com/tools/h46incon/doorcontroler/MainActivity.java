@@ -736,14 +736,17 @@ public class MainActivity extends ActionBarActivity {
 					@Override
 					public void onFinish(boolean isSuccess, final char[] input)
 					{
-						mHandler.post(new Runnable() {
-							@Override
-							public void run()
-							{
-								btDeviceConnector.doOpenDoor(input);
-							}
-						});
-
+						if (isSuccess) {
+							mHandler.post(new Runnable() {
+								@Override
+								public void run()
+								{
+									btDeviceConnector.doOpenDoor(input);
+								}
+							});
+						} else {
+							Log.d(TAG, "open door progress canceled");
+						}
 					}
 				})
 				.setTitle("请输入密码")
