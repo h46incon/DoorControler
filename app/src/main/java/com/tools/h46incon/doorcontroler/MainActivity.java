@@ -200,59 +200,30 @@ public class MainActivity extends ActionBarActivity {
 			// Dev shake hand task
 			SerialBGWorker.taskInfo openDoorTask = new SerialBGWorker.taskInfo();
 			openDoorTask.message = "正在发送开门指令...";
-			openDoorTask.onWorkFinished = new SerialBGWorker.OnPerWorkFinished() {
-				@Override
-				public boolean onPerWorkFinished(BGWorker.WorkState state, Object reslut)
-				{
-					switch (state) {
-						case SUCCESS:
-							if ((Boolean) reslut) {
-								outputConsole.printNewItem("开门成功");
-								mHandler.post(new Runnable() {
-									@Override
-									public void run()
-									{
-										stateManager.changeState(State.EXIT);
-										MyApp.showSimpleToast("理论上，门应该开了");
-									}
-								});
-								mHandler.postDelayed(new Runnable() {
-									@Override
-									public void run()
-									{
-										exitingWithTurnOffBTDialog.show();
-									}
-								}, 1000);
-								return true;
-							} else {
-								mHandler.post(new Runnable() {
-									@Override
-									public void run()
-									{
-										showWrongKeyDialog();
-									}
-								});
-								outputConsole.printNewItem("开门失败(密码错误）");
-								return false;
-							}
-
-						case EXCEPTION:
-							outputConsole.printNewItem("设备验证失败(通信出错）");
-							return false;
-
-						case CANCEL:
-							return false;
-
-						case TIME_OUT:
-							outputConsole.printNewItem("设备验证失败(设备无回应）");
-							return false;
-
-						default:
-							Log.w(TAG, "Unhandled return state when device verifying");
-							return false;
+			openDoorTask.onWorkFinished = getOnKeyedWordFinishHandler(
+					new Runnable() {
+						@Override
+						public void run()
+						{
+							outputConsole.printNewItem("开门成功");
+							mHandler.post(new Runnable() {
+								@Override
+								public void run()
+								{
+									stateManager.changeState(State.EXIT);
+									MyApp.showSimpleToast("理论上，门应该开了");
+								}
+							});
+							mHandler.postDelayed(new Runnable() {
+								@Override
+								public void run()
+								{
+									exitingWithTurnOffBTDialog.show();
+								}
+							}, 1000);
+						}
 					}
-				}
-			};
+			);
 			openDoorTask.task = new Callable() {
 				@Override
 				public Object call() throws Exception
@@ -316,6 +287,51 @@ public class MainActivity extends ActionBarActivity {
 			};
 			deviceVerifyTask.timeout = 10 * 1000;      // 10s
 
+		}
+
+		private SerialBGWorker.OnPerWorkFinished getOnKeyedWordFinishHandler(final Runnable onSuccessHandler)
+		{
+
+			SerialBGWorker.OnPerWorkFinished onWorkFinished = new SerialBGWorker.OnPerWorkFinished() {
+				@Override
+				public boolean onPerWorkFinished(BGWorker.WorkState state, Object reslut)
+				{
+					switch (state) {
+						case SUCCESS:
+							if ((Boolean) reslut) {
+								onSuccessHandler.run();
+								return true;
+							} else {
+								mHandler.post(new Runnable() {
+									@Override
+									public void run()
+									{
+										showWrongKeyDialog();
+									}
+								});
+								outputConsole.printNewItem("操作失败(密码错误）");
+								return false;
+							}
+
+						case EXCEPTION:
+							outputConsole.printNewItem("操作失败(通信出错）");
+							return false;
+
+						case CANCEL:
+							return false;
+
+						case TIME_OUT:
+							outputConsole.printNewItem("操作失败(设备无回应）");
+							return false;
+
+						default:
+							Log.w(TAG, "Unhandled return state when device verifying");
+							return false;
+					}
+				}
+			};
+
+			return onWorkFinished;
 		}
 
 		private void showWrongDeviceDialog()
