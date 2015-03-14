@@ -97,6 +97,11 @@ public class DeviceTalker {
 		putKeyInBuffer(key, dataBuf);
 		dataBuf.flip();
 
+		return sendKeyCommand();
+	}
+
+	private boolean sendKeyCommand() throws IOException
+	{
 		sendDataBuf();
 		readPackages();
 
@@ -113,19 +118,28 @@ public class DeviceTalker {
 			}
 		}
 
-		throw new IOException("Error device responded");
-	}
-
-	public boolean changeOpenDoorKey(char[] adminKey, char[] oldKey, char[] newKey)
-	{
-		// TODO:
 		return false;
 	}
 
-	public boolean changeAdminKey(char[] oldAdminKey, char[] newAdminKey)
+	public boolean changeOpenDoorKey(char[] adminKey, char[] oldKey, char[] newKey) throws IOException
 	{
-		// TODO:
-		return false;
+		dataBuf.clear();
+		dataBuf.put(cChangeKey);
+		putKeyInBuffer(adminKey, dataBuf);
+		putKeyInBuffer(oldKey, dataBuf);
+		putKeyInBuffer(newKey, dataBuf);
+
+		return sendKeyCommand();
+	}
+
+	public boolean changeAdminKey(char[] oldAdminKey, char[] newAdminKey) throws IOException
+	{
+		dataBuf.clear();
+		dataBuf.put(cChangeAdminKey);
+		putKeyInBuffer(oldAdminKey, dataBuf);
+		putKeyInBuffer(newAdminKey, dataBuf);
+
+		return sendKeyCommand();
 	}
 
 	private static void putKeyInBuffer(char[] key, ByteBuffer buffer)
