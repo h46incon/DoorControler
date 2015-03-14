@@ -69,7 +69,7 @@ public class DeviceTalker {
 		}
 
 		for (byte[] pack : packList) {
-			if (pack[0] == cCommandResonse) {
+			if (pack[0] == cCmdSuccess) {
 				final byte[] expectMacAddr = encrypter.getMacAddr();
 				// Check size
 				if (pack.length == expectMacAddr.length + 1) {
@@ -230,14 +230,14 @@ public class DeviceTalker {
 	private static final byte cDeviceSimpleResponse = (byte) 0x83;
 	private static final byte cEnterStreamCommunicate = 0x76;
 
-	private static final byte cCommandResonse = (byte) 0xFF;
-	private static final byte cCommandError = (byte) 0xFD;
+	private static final byte cCmdSuccess = (byte) 0x96;
+	private static final byte cNotACmd = (byte) 0xFD;
+	private static final byte cKeyError = (byte) 0x99;
+
 	private static final byte cRequireVerify = (byte) 0xBC;
 	private static final byte cOpenDoor = (byte) 0x69;
 	private static final byte cChangeKey = (byte) 0x70;
 	private static final byte cChangeAdminKey = (byte) 0x71;
-	private static final byte cCmdSuccess = (byte) 0x96;
-	private static final byte cKeyError = (byte) 0x99;
 
 	private static final String TAG = "DevTalker";
 
