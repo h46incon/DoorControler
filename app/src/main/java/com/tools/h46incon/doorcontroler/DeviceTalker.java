@@ -42,6 +42,7 @@ public class DeviceTalker {
 
 	public boolean shakeHand() throws IOException
 	{
+		Log.d(TAG, "Start shake hand");
 		clearInput();
 		byte byteRead;
 		outputStream.write(cRequireSimpleResponse);
@@ -57,6 +58,7 @@ public class DeviceTalker {
 
 	public boolean verifyDevice() throws IOException
 	{
+		Log.d(TAG, "Start verify device");
 		dataBuf.clear();
 		dataBuf.put(cRequireVerify);
 		dataBuf.flip();
@@ -92,6 +94,7 @@ public class DeviceTalker {
 
 	public boolean openDoor(char[] key) throws IOException
 	{
+		Log.d(TAG, "Start open door");
 		dataBuf.clear();
 		dataBuf.put(cOpenDoor);
 		putKeyInBuffer(key, dataBuf);
@@ -123,6 +126,7 @@ public class DeviceTalker {
 
 	public boolean changeOpenDoorKey(char[] adminKey, char[] oldKey, char[] newKey) throws IOException
 	{
+		Log.d(TAG, "Start change open door key");
 		dataBuf.clear();
 		dataBuf.put(cChangeKey);
 		putKeyInBuffer(adminKey, dataBuf);
@@ -134,6 +138,7 @@ public class DeviceTalker {
 
 	public boolean changeAdminKey(char[] oldAdminKey, char[] newAdminKey) throws IOException
 	{
+		Log.d(TAG, "Start change admin key");
 		dataBuf.clear();
 		dataBuf.put(cChangeAdminKey);
 		putKeyInBuffer(oldAdminKey, dataBuf);
@@ -188,6 +193,7 @@ public class DeviceTalker {
 
 	private void readPackages() throws IOException
 	{
+		Log.d(TAG, "waiting for respond");
 		boolean hasGetPack = false;
 		while (!hasGetPack) {
 			// Use read() to block
@@ -211,7 +217,7 @@ public class DeviceTalker {
 			if (dataLen > 0) {
 				// Read data
 				if (dataLen > inputBuf.length - 1) {
-					dataLen = inputBuf.length -1;
+					dataLen = inputBuf.length - 1;
 				}
 				inputStream.read(inputBuf, 1, dataLen);
 
@@ -224,6 +230,7 @@ public class DeviceTalker {
 					decrypt.get(data);
 					packList.offer(data);
 					hasGetPack = true;
+					Log.d(TAG, "get package");
 				}
 			}
 		}
