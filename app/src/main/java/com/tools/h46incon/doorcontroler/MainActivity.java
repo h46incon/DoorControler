@@ -25,11 +25,13 @@ import android.widget.TextView;
 import com.tools.h46incon.doorcontroler.BGWorker.BGWorker;
 import com.tools.h46incon.doorcontroler.BGWorker.SerialBGWorker;
 import com.tools.h46incon.doorcontroler.PinInput.PinInputDialog;
+import com.tools.h46incon.doorcontroler.PinInput.SerialPinInputDialog;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Field;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 
@@ -266,6 +268,10 @@ public class MainActivity extends ActionBarActivity {
 
 		}
 
+		public void doChangeKey(final char[] adminKey, final char[] oldKey, final char[] newKey)
+		{
+			// TODO:
+		}
 		private void initBGTask()
 		{
 			deviceVerifyTask = new SerialBGWorker.taskInfo();
@@ -747,8 +753,58 @@ public class MainActivity extends ActionBarActivity {
 
 	private void changeOpenDoorKey()
 	{
-		// TODO:
+		SerialPinInputDialog dialogs = new SerialPinInputDialog();
+		final String tag = "ChangeKeyPin";
+		dialogs
+				.addDialog("请输入管理密码", "管理密码，是管理密码的密码", tag)
+				.addDialog("请输入原始密码", "输错了可就要全部重新输入了", tag)
+				.addDialog("请输入新密码", "新密码，就是新的开门密码", tag)
+				.addDialog("请再次输入新密码", "成败在此一举！", tag)
+				.setOnWorkFinishedListener(new SerialPinInputDialog.OnWorkFinished() {
+					@Override
+					public void onFinished(List<char[]> result, boolean hasAllFinished)
+					{
+						if (!hasAllFinished) {
+							Log.d(TAG, "Change key progress canceled");
+							return;
+						}
+						if (result.size() != 4) {
+							Log.e(TAG, "has not enough keys");
+							return;
+						}
+						char[] adminKey = result.get(0);
+						char[] oldKey = result.get(1);
+						char[] newKey = result.get(2);
+						char[] newKeyConfirm = result.get(3);
+
+						// Check confirm equal
+						if (!checkKeyConfirmEqual(newKey, newKeyConfirm)) {
+							showAlertDialog("两次输入的新密码不一致",
+									"你肯定是手抖了( ͡° ͜ʖ ͡°)\n这个功能用的少，流程我就没优化了，施主请重新输入吧");
+							Log.d(TAG, "confirmed key error");
+							return;
+						}
+
+						btDeviceConnector.doChangeKey(adminKey, oldKey, newKey);
+					}
+				})
+				.startWork(getFragmentManager());
+
 	}
+
+	private boolean checkKeyConfirmEqual(char[] key, char[] confirmKey)
+	{
+		if (key.length != confirmKey.length) {
+			return false;
+		}
+		for (int i = 0; i < key.length; ++i) {
+			if (key[i] != confirmKey[i]) {
+				return false;
+			}
+		}
+		return true;
+	}
+
 	private void exiting()
 	{
 		if (btAdapter.isEnabled()) {
