@@ -1,4 +1,4 @@
-package com.tools.h46incon.doorcontroler;
+package com.tools.h46incon.doorcontroler.PinInput;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -17,6 +17,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.TextView;
+
+import com.tools.h46incon.doorcontroler.R;
 
 /**
  * Created by h46incon on 2015/2/4.

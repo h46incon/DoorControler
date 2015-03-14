@@ -24,6 +24,7 @@ import android.widget.TextView;
 
 import com.tools.h46incon.doorcontroler.BGWorker.BGWorker;
 import com.tools.h46incon.doorcontroler.BGWorker.SerialBGWorker;
+import com.tools.h46incon.doorcontroler.PinInput.PinInputDialog;
 
 import java.io.IOException;
 import java.io.InputStream;
