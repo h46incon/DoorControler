@@ -247,13 +247,7 @@ public class MainActivity extends ActionBarActivity {
 						public void run()
 						{
 							outputConsole.printNewItem("修改开门密码成功");
-							mHandler.post( new Runnable() {
-								@Override
-								public void run()
-								{
-									showAlertDialog("成功", "请记住新密码");
-								}
-							});
+							showChangeKeySuccessDialog();
 						}
 					}
 			);
@@ -281,13 +275,7 @@ public class MainActivity extends ActionBarActivity {
 						public void run()
 						{
 							outputConsole.printNewItem("修改管理密码成功");
-							mHandler.post( new Runnable() {
-								@Override
-								public void run()
-								{
-									showAlertDialog("成功", "请记住新密码");
-								}
-							});
+							showChangeKeySuccessDialog();
 						}
 					}
 			);
@@ -361,19 +349,14 @@ public class MainActivity extends ActionBarActivity {
 								onSuccessHandler.run();
 								return true;
 							} else {
-								mHandler.post(new Runnable() {
-									@Override
-									public void run()
-									{
-										showWrongKeyDialog();
-									}
-								});
+								showWrongKeyDialog();
 								outputConsole.printNewItem("操作失败(密码错误）");
 								return false;
 							}
 
 						case EXCEPTION:
 							outputConsole.printNewItem("操作失败(通信出错）");
+							showCommonFaliedDialog();
 							return false;
 
 						case CANCEL:
@@ -381,9 +364,11 @@ public class MainActivity extends ActionBarActivity {
 
 						case TIME_OUT:
 							outputConsole.printNewItem("操作失败(设备无回应）");
+							showCommonFaliedDialog();
 							return false;
 
 						default:
+							showCommonFaliedDialog();
 							Log.w(TAG, "Unhandled return state when device verifying");
 							return false;
 					}
@@ -402,15 +387,42 @@ public class MainActivity extends ActionBarActivity {
 			serialBGWorker.start();
 		}
 
+		private void showAlertDialogInMainLoop(final CharSequence title, final CharSequence message)
+		{
+			mHandler.post(new Runnable() {
+				@Override
+				public void run()
+				{
+					showAlertDialog(title, message);
+				}
+			});
+		}
 		private void showWrongDeviceDialog()
 		{
-			showAlertDialog("握手失败", "是否连错蓝牙");
+			showAlertDialogInMainLoop("握手失败", "是否连错蓝牙？");
 		}
 
 		private void showWrongKeyDialog()
 		{
-			showAlertDialog("密码错误", "手抖了吗");
+			showAlertDialogInMainLoop("密码错误", "手抖了吗？");
 		}
+
+		private void showCommonFaliedDialog()
+		{
+			showAlertDialogInMainLoop("失败", "再试试？");
+		}
+
+		private void showChangeKeySuccessDialog()
+		{
+			mHandler.post( new Runnable() {
+				@Override
+				public void run()
+				{
+					showAlertDialog("成功", "请记住新密码");
+				}
+			});
+		}
+
 		// connected device
 		// It will finish bluetooth device connection and hand shaking work
 		private void connectDoorCtrlDevice(final BluetoothDevice btDevice)
