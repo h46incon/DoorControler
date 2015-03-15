@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    style="@android:style/Theme.Holo.Light.Dialog.NoActionBar"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/pin_input_bg">
+
+
+    <ImageView
+        android:layout_width="@dimen/pin_box_icon_size"
+        android:layout_height="@dimen/pin_box_icon_size"
+        android:scaleType="fitXY"
+        android:src="@drawable/ic_launcher"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentLeft="true"
+        android:layout_marginTop="20dp"
+        android:layout_marginLeft="30dp"
+        android:id="@+id/pin_box_icon"
+        />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="@dimen/pin_box_icon_size"
+        android:layout_toRightOf="@id/pin_box_icon"
+        android:layout_alignTop="@id/pin_box_icon"
+        android:gravity="center_vertical"
+        android:layout_marginLeft="10dp"
+        android:text="Default Title"
+        android:textSize="20sp"
+        android:textColor="@color/theme_highlight_color"
+        android:id="@+id/pin_box_title"
+        />
+
+    <ImageView
+        android:layout_width="15dp"
+        android:layout_height="15dp"
+        android:layout_alignParentRight="true"
+        android:layout_alignTop="@id/pin_box_icon"
+        android:layout_marginTop="10dp"
+        android:layout_marginRight="30dp"
+        android:scaleType="fitXY"
+        android:src="@drawable/ic_close"
+        android:id="@+id/pin_box_close_btn"
+        />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="2dp"
+        android:layout_below="@id/pin_box_title"
+        android:layout_marginTop="10dp"
+        android:background="#EBEBEB"
+        android:id="@+id/pin_box_title_divider"
+        />
+
+    <include layout="@layout/pin_boxes"
+             android:layout_width="wrap_content"
+             android:layout_height="wrap_content"
+             android:layout_centerHorizontal="true"
+             android:layout_below="@id/pin_box_title_divider"
+             android:layout_marginTop="50dp"
+             android:id="@+id/pin_boxes"
+        />
+
+    <TextView
+        android:id="@+id/pin_pox_message_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:text="Default message"
+        android:textColor="#353535"
+        android:layout_below="@id/pin_box_title_divider"
+        android:layout_marginTop="20dp"
+        />
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:textSize="2sp"
+        android:text="这是一行分割线"
+        android:textColor="#000000"
+        android:layout_below="@id/pin_boxes"
+        android:layout_marginTop="50dp"
+        android:id="@+id/pin_box_kb_divider"
+        />
+
+    <android.inputmethodservice.KeyboardView
+        android:id="@+id/pin_box_keyboard"
+        android:layout_width="200dp"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/pin_box_kb_divider"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="20dp"
+        android:focusable="true"
+        android:focusableInTouchMode="true"
+        android:background="@drawable/keyboard_bg"
+        android:keyBackground="@drawable/keyboard_btn"
+        android:keyTextColor="#353535"
+        android:paddingTop="1px"
+        android:paddingLeft="1px"
+        android:shadowRadius="1"
+
+        />
+
+
+</RelativeLayout>

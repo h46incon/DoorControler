@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+    <!--Could not use merge as root tag, because could not assign an ID for merge tag when included -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+       android:layout_width="wrap_content"
+       android:layout_height="wrap_content">
+
+    <View
+        android:layout_width="@dimen/pin_box_size"
+        android:layout_height="@dimen/pin_box_size"
+        android:id="@+id/pin_box"
+        />
+</LinearLayout>

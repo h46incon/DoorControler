@@ -14,6 +14,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Resources;
 import android.os.Bundle;
+import android.text.Html;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.TypedValue;
@@ -145,7 +146,9 @@ public class BTDiscoveryDialog extends DialogFragment{
 		// Not need to add bonded device because they will be found again.
 
 		// Instantiate an AlertDialog.Builder with its constructor
-		AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+		AlertDialog.Builder builder = new AlertDialog.Builder(
+				getActivity(),
+				R.style.LightDialog);
 
 		// set adapter to show fonts
 		deviceAdapter = new DeviceAdapter();
@@ -155,7 +158,6 @@ public class BTDiscoveryDialog extends DialogFragment{
 			{
 				int magicNumber = arg1;
 				BluetoothDevice selectedDev = btDevices.get(magicNumber);
-				// TODO: connect?
 				if (mListener != null) {
 					mListener.onDevSelect(selectedDev);
 				}
@@ -189,6 +191,7 @@ public class BTDiscoveryDialog extends DialogFragment{
 		// Get the AlertDialog from create()
 		AlertDialog dialog = builder.create();
 
+
 		// Register the BroadcastReceiver
 		IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
 		mContext.registerReceiver(mReceiver, filter);
@@ -199,13 +202,9 @@ public class BTDiscoveryDialog extends DialogFragment{
 		// view's style
 		private final float paddingDP = 20;     // Left and right padding in a view
 		private final float textSize = 20;      // Use a bigger font's size
-		// Use min height to make echo view have the same height in most case
-		// Use the unit with SP to make this height relate to font size
-		private final float minHeightSP = 50;
 
 		// convert value to pixel value
 		private final int paddingPX = dpToPix(paddingDP);
-		private final int minHeightPX = spToPix(minHeightSP);
 
 		@Override
 		public int getCount()
@@ -242,14 +241,21 @@ public class BTDiscoveryDialog extends DialogFragment{
 			}
 
 			BluetoothDevice device = btDevices.get(position);
-			String textToShow = device.getName();
-			view.setText(textToShow);
+			String textFormat = ""
+					+ "<font color='#3C3C3C'>"
+					+	"<em>%s</em>"
+					+   "<br/>"
+					+   "<small><small>"
+					+       "&nbsp &nbsp &nbsp %s"
+					+   "</small></small>"
+					+ "</font>";
+			String htmlToShow = String.format(textFormat, device.getName(), device.getAddress());
+			view.setText(Html.fromHtml(htmlToShow));
 
 			// Set style
 			view.setGravity(Gravity.CENTER_VERTICAL);
 			view.setPadding(paddingPX, 0, paddingPX, 0);
 			view.setTextSize(textSize);
-			view.setMinHeight(minHeightPX);
 
 			return view;
 

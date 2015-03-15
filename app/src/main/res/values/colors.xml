@@ -1,4 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="bg_color">#3C3C3C</color>
+    <color name="theme_highlight_color">#00B9FD</color>
+    <color name="pin_input_boxes_divider_color">#EFEFEF</color>
+
+    <drawable name="key_normal_color">#fcfcfc</drawable>
+    <drawable name="key_selected_color">#b8bcc0</drawable>
+    <drawable name="opkey_selected_color">#cbcfd5</drawable>
+    <drawable name="keyboard_bg_color">#acb3b6</drawable>
 </resources>

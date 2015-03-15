@@ -2,6 +2,6 @@
 <resources>
 
     <string name="app_name">DoorControler</string>
-    <string name="title_activity_main">一个不大安全的开门App</string>
+    <string name="title_activity_main">芝麻开门</string>
 
 </resources>
