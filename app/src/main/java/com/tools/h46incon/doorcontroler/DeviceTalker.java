@@ -132,6 +132,7 @@ public class DeviceTalker {
 		putKeyInBuffer(adminKey, dataBuf);
 		putKeyInBuffer(oldKey, dataBuf);
 		putKeyInBuffer(newKey, dataBuf);
+		dataBuf.flip();
 
 		return sendKeyCommand();
 	}
@@ -143,6 +144,7 @@ public class DeviceTalker {
 		dataBuf.put(cChangeAdminKey);
 		putKeyInBuffer(oldAdminKey, dataBuf);
 		putKeyInBuffer(newAdminKey, dataBuf);
+		dataBuf.flip();
 
 		return sendKeyCommand();
 	}
