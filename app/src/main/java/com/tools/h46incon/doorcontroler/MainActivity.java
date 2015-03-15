@@ -195,8 +195,6 @@ public class MainActivity extends ActionBarActivity {
 		{
 			outputConsole.printNewItem("正在尝试开门");
 
-			final SerialBGWorker serialBGWorker = new SerialBGWorker(MainActivity.this);
-
 			// Dev shake hand task
 			SerialBGWorker.taskInfo openDoorTask = new SerialBGWorker.taskInfo();
 			openDoorTask.message = "正在发送开门指令...";
@@ -231,18 +229,46 @@ public class MainActivity extends ActionBarActivity {
 					return deviceTalker.openDoor(key);
 				}
 			};
-			openDoorTask.timeout = 10 * 1000;      // 10s
+			openDoorTask.timeout = defaultWorkTimeOut;      // 10s
 
-			serialBGWorker.addTask(deviceVerifyTask);
-			serialBGWorker.addTask(openDoorTask);
-			serialBGWorker.start();
+			runKeyedWork(openDoorTask);
 
 		}
 
 		public void doChangeKey(final char[] adminKey, final char[] oldKey, final char[] newKey)
 		{
-			// TODO:
+			outputConsole.printNewItem("正在修改开门密码");
+
+			SerialBGWorker.taskInfo changeKeyTask = new SerialBGWorker.taskInfo();
+			changeKeyTask.message = "正在发送修改密码指令...";
+			changeKeyTask.onWorkFinished = getOnKeyedWordFinishHandler(
+					new Runnable() {
+						@Override
+						public void run()
+						{
+							outputConsole.printNewItem("修改开门密码成功");
+							mHandler.post( new Runnable() {
+								@Override
+								public void run()
+								{
+									showAlertDialog("成功", "请记住新密码");
+								}
+							});
+						}
+					}
+			);
+			changeKeyTask.task = new Callable() {
+				@Override
+				public Object call() throws Exception
+				{
+					return deviceTalker.changeOpenDoorKey(adminKey, oldKey, newKey);
+				}
+			};
+			changeKeyTask.timeout = defaultWorkTimeOut;
+
+			runKeyedWork(changeKeyTask);
 		}
+
 		private void initBGTask()
 		{
 			deviceVerifyTask = new SerialBGWorker.taskInfo();
@@ -285,7 +311,7 @@ public class MainActivity extends ActionBarActivity {
 					return deviceTalker.verifyDevice();
 				}
 			};
-			deviceVerifyTask.timeout = 10 * 1000;      // 10s
+			deviceVerifyTask.timeout = defaultWorkTimeOut;      // 10s
 
 		}
 
@@ -332,6 +358,15 @@ public class MainActivity extends ActionBarActivity {
 			};
 
 			return onWorkFinished;
+		}
+
+		private void runKeyedWork(SerialBGWorker.taskInfo task)
+		{
+			SerialBGWorker serialBGWorker = new SerialBGWorker(MainActivity.this);
+			// verify device first
+			serialBGWorker.addTask(deviceVerifyTask);
+			serialBGWorker.addTask(task);
+			serialBGWorker.start();
 		}
 
 		private void showWrongDeviceDialog()
@@ -466,7 +501,7 @@ public class MainActivity extends ActionBarActivity {
 					}
 				}
 			};
-			devShakeTask.timeout = 10 * 1000;
+			devShakeTask.timeout = defaultWorkTimeOut;
 
 
 			serialBGWorker.addTask(connectSocketTask);
@@ -567,6 +602,7 @@ public class MainActivity extends ActionBarActivity {
 		}
 
 		private final UUID BlueToothSSPUUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
+		private final static int defaultWorkTimeOut = 10 * 1000;    // 10 s
 		private BluetoothDevice btDevice;
 		private BluetoothSocket btSocket;
 		private InputStream btSocketIn;
@@ -610,7 +646,7 @@ public class MainActivity extends ActionBarActivity {
 			{
 				if (stateManager.getCurState() == State.BT_SETTING) {
 					showAlertDialog("别急", "请先连接设备");
-				} else{
+				} else {
 					changeOpenDoorKey();
 				}
 				return true;
