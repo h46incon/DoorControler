@@ -269,6 +269,39 @@ public class MainActivity extends ActionBarActivity {
 			runKeyedWork(changeKeyTask);
 		}
 
+		public void doChangeAdminKey(final char[] oldAdminKey, final char[] newAdminKey)
+		{
+			outputConsole.printNewItem("正在修改管理密码");
+
+			SerialBGWorker.taskInfo changeAdminKeyTask = new SerialBGWorker.taskInfo();
+			changeAdminKeyTask.message = "正在发送修改密码指令...";
+			changeAdminKeyTask.onWorkFinished = getOnKeyedWordFinishHandler(
+					new Runnable() {
+						@Override
+						public void run()
+						{
+							outputConsole.printNewItem("修改管理密码成功");
+							mHandler.post( new Runnable() {
+								@Override
+								public void run()
+								{
+									showAlertDialog("成功", "请记住新密码");
+								}
+							});
+						}
+					}
+			);
+			changeAdminKeyTask.task = new Callable() {
+				@Override
+				public Object call() throws Exception
+				{
+					return deviceTalker.changeAdminKey(oldAdminKey, newAdminKey);
+				}
+			};
+			changeAdminKeyTask.timeout = defaultWorkTimeOut;
+
+			runKeyedWork(changeAdminKeyTask);
+		}
 		private void initBGTask()
 		{
 			deviceVerifyTask = new SerialBGWorker.taskInfo();
@@ -610,6 +643,7 @@ public class MainActivity extends ActionBarActivity {
 		DeviceTalker deviceTalker = new DeviceTalker();
 
 		SerialBGWorker.taskInfo deviceVerifyTask;
+
 	}
 
 	private void showAlertDialog(CharSequence title, CharSequence message)
@@ -639,21 +673,35 @@ public class MainActivity extends ActionBarActivity {
 	{
 		super.onCreateOptionsMenu(menu);
 
-		MenuItem cpwdItem = menu.add("修改密码");
-		cpwdItem.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+		final MenuItem cpwdItem = menu.add("修改密码");
+		final MenuItem cAdminPwdItem = menu.add("修改管理员密码");
+
+		MenuItem.OnMenuItemClickListener itemHandler = new MenuItem.OnMenuItemClickListener() {
 			@Override
 			public boolean onMenuItemClick(MenuItem item)
 			{
+				if (item != cpwdItem && item != cAdminPwdItem) {
+					return false;
+				}
+
 				if (stateManager.getCurState() == State.BT_SETTING) {
 					showAlertDialog("别急", "请先连接设备");
 				} else {
-					changeOpenDoorKey();
+					if (item == cpwdItem) {
+						changeOpenDoorKey();
+					} else if (item == cAdminPwdItem) {
+						changeAdminKey();
+					} else {
+						Log.w(TAG, "Un handler menu item");
+					}
 				}
 				return true;
 			}
-		});
+		};
 
-
+		// set click listener
+		cpwdItem.setOnMenuItemClickListener(itemHandler);
+		cAdminPwdItem.setOnMenuItemClickListener(itemHandler);
 		// return true to show menu
 		return true;
 	}
@@ -847,6 +895,44 @@ public class MainActivity extends ActionBarActivity {
 
 	}
 
+	private void changeAdminKey()
+	{
+		SerialPinInputDialog dialogs = new SerialPinInputDialog();
+		final String tag = "ChangeAdminKeyPin";
+		dialogs
+				.addDialog("请输入原始管理密码", "管理密码，是管理密码的密码", tag)
+				.addDialog("请输入新密码", "新密码，就是新的管理密码", tag)
+				.addDialog("请再次输入新密码", "成败在此一举！", tag)
+				.setOnWorkFinishedListener(new SerialPinInputDialog.OnWorkFinished() {
+					@Override
+					public void onFinished(List<char[]> result, boolean hasAllFinished)
+					{
+						if (!hasAllFinished) {
+							Log.d(TAG, "Change key progress canceled");
+							return;
+						}
+						if (result.size() != 3) {
+							Log.e(TAG, "has not enough keys");
+							return;
+						}
+						char[] oldAdminKey = result.get(0);
+						char[] newAdminKey = result.get(1);
+						char[] newAdminKeyConfirm = result.get(2);
+
+						// Check confirm equal
+						if (!checkKeyConfirmEqual(newAdminKey, newAdminKeyConfirm)) {
+							showAlertDialog("两次输入的新密码不一致",
+									"你肯定是手抖了( ͡° ͜ʖ ͡°)\n这个功能用的少，流程我就没优化了，施主请重新输入吧");
+							Log.d(TAG, "confirmed key error");
+							return;
+						}
+
+						btDeviceConnector.doChangeAdminKey(oldAdminKey, newAdminKey);
+					}
+				})
+				.startWork(getFragmentManager());
+
+	}
 	private boolean checkKeyConfirmEqual(char[] key, char[] confirmKey)
 	{
 		if (key.length != confirmKey.length) {
