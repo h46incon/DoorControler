@@ -10,7 +10,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
-import java.nio.channels.ClosedByInterruptException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
@@ -18,6 +17,9 @@ import java.util.Queue;
 /**
  * Created by h46incon on 2015/3/1.
  * This class is used for handle device communication protocol
+ * All I/O operations will not timeout.
+ * It assume user has run these operations in a background thread (such as BGWorker),
+ * and when user try to cancel this thread, it will throw a IOException("Device not responding")
  */
 public class DeviceTalker {
 	public DeviceTalker ()
@@ -196,20 +198,30 @@ public class DeviceTalker {
 	private void readPackages() throws IOException
 	{
 		Log.d(TAG, "waiting for respond");
+		final int waitTime = 100;       // 100 ms
 		boolean hasGetPack = false;
 		while (!hasGetPack) {
+			// F**K, this blocking IO will not return even if try to cancel this thread.
 			// Use read() to block
-			try {
-				int firstData = inputStream.read();
-				inputBuf[0] = (byte) firstData;
-			} catch (ClosedByInterruptException e) {
-				Log.d(TAG, "Not data available");
-				return;
+			//int firstData = inputStream.read();
+			while (true) {
+				if (inputStream.available() == 0) {
+					try {
+						// Log.v(TAG, "No data, sleeping...");
+						Thread.sleep(waitTime);
+					} catch (InterruptedException e) {
+						Log.d(TAG, "Stop trying to read packages");
+						return;
+					}
+				} else {
+					break;
+				}
 			}
+			Log.v(TAG, "new input data available, thread ID: " + Thread.currentThread().toString() );
 
 			// Wait for more data
 			try {
-				final int waitMS = 10;
+				final int waitMS = waitTime;
 				Thread.sleep(waitMS);
 			} catch (InterruptedException e) {
 
@@ -218,13 +230,12 @@ public class DeviceTalker {
 			int dataLen = inputStream.available();
 			if (dataLen > 0) {
 				// Read data
-				if (dataLen > inputBuf.length - 1) {
-					dataLen = inputBuf.length - 1;
+				if (dataLen > inputBuf.length) {
+					dataLen = inputBuf.length;
 				}
-				inputStream.read(inputBuf, 1, dataLen);
+				inputStream.read(inputBuf, 0, dataLen);
 
-				// Decode
-				List<byte[]> packs = messageDecoder.decode(inputBuf, dataLen + 1);
+				List<byte[]> packs = messageDecoder.decode(inputBuf, dataLen);
 				for (byte[] pack : packs) {
 					// NOTE: performance
 					ByteBuffer decrypt = encrypter.decrypt(ByteBuffer.wrap(pack));
