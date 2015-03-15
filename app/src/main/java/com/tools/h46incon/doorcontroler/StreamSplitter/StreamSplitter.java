@@ -72,6 +72,7 @@ public class StreamSplitter {
 			}
 		}
 
+		msgBuf.storeRemainInStream();
 		return result;
 	}
 

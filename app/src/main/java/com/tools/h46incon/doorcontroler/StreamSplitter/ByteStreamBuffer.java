@@ -82,7 +82,7 @@ class ByteStreamBuffer {
 		}
 	}
 
-	private void storeRemainInStream()
+	public void storeRemainInStream()
 	{
 		if (newInBuffer == null || !newInBuffer.hasRemaining()) {
 			return;
