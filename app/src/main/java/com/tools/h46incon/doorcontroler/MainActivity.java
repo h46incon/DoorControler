@@ -11,6 +11,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.ParcelUuid;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -556,40 +557,78 @@ public class MainActivity extends ActionBarActivity {
 		}
 
 
-		private boolean connectBTSSPSocket(final BluetoothDevice device)
+		private boolean connectBTSocket(final BluetoothDevice device, final UUID uuid)
 		{
 			// Try to create a SSP socket
 			// This step will be finished in some millisecond
 			try {
-				btSocket = device.createRfcommSocketToServiceRecord(BlueToothSSPUUID);
+				btSocket = device.createRfcommSocketToServiceRecord(uuid);
 			} catch (IOException e) {
-				btSocket = null;
-				Log.e(TAG, "Can not create BlueTooth socket!");
-				outputConsole.printNewItem("获取蓝牙串口Socket失败！");
+				Log.w(TAG, "Can not create BlueTooth socket with uuid: " + uuid);
 				e.printStackTrace();
 				return false;
 			}
-
 
 			// Try to connect this socket
 			try {
 				btSocket.connect();
 			} catch (IOException e) {
-				try {
-					btSocket.close();
-				} catch (IOException e1) {
-					e1.printStackTrace();
-				}
-				btSocket = null;
-				Log.e(TAG, "Can not connect BT socket!");
-				outputConsole.printNewItem("Socket连接...失败！");
 				e.printStackTrace();
+				Log.w(TAG, "Can not connect BT socket with uuid: " + uuid);
 				return false;
 			}
 
-			btDevice = device;
-			outputConsole.printNewItem("Socket连接...成功");
 			return true;
+		}
+
+		private boolean connectBTSSPSocket(final BluetoothDevice device)
+		{
+			ParcelUuid[] deviceUuids = device.getUuids();
+			boolean has_connected = false;
+
+			if (deviceUuids != null) {
+				// try to connect SSP UUID first
+				// Move SSP UUID to the first if exist
+				for (int i = 1; i < deviceUuids.length; ++i) {
+					if (deviceUuids[i].getUuid().compareTo(BlueToothSSPUUID) == 0) {
+						ParcelUuid temp = deviceUuids[0];
+						deviceUuids[0] = deviceUuids[i];
+						deviceUuids[i] = temp;
+					}
+				}
+
+				// Try with uuid list
+				for (ParcelUuid deviceUuid : deviceUuids) {
+					if (connectBTSocket(device, deviceUuid.getUuid())) {
+						has_connected = true;
+						break;
+					}
+				}
+
+			} else {
+			}
+			// else try to connect with default SSP UUID
+			if (!has_connected) {
+				if (connectBTSocket(device, BlueToothSSPUUID) ) {
+					has_connected = true;
+				}
+			}
+
+			if (has_connected) {
+				btDevice = device;
+				outputConsole.printNewItem("Socket连接...成功");
+				return true;
+			} else {
+				outputConsole.printNewItem("Socket连接...失败！");
+				// Clean
+				try {
+					btSocket.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+				btSocket = null;
+				return false;
+			}
 		}
 
 		private boolean getSocketStream()
