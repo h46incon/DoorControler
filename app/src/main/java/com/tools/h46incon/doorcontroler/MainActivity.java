@@ -223,7 +223,7 @@ public class MainActivity extends ActionBarActivity {
 								@Override
 								public void run()
 								{
-									exitingWithTurnOffBTDialog.show();
+									turnOffBTDialog.show();
 								}
 							}, 1000);
 						}
@@ -843,8 +843,10 @@ public class MainActivity extends ActionBarActivity {
 		AlertDialog.Builder builder = new AlertDialog.Builder(this);
 		builder.setMessage("退出时要顺便关闭蓝牙吗？");
 		builder.setTitle("退出");
+		builder.setIcon(android.R.drawable.ic_dialog_alert);
 
-		builder.setPositiveButton("关了吧", new DialogInterface.OnClickListener() {
+		// The text of positive button will be modified when shown
+		builder.setPositiveButton("_", new DialogInterface.OnClickListener() {
 			@Override
 			public void onClick(DialogInterface dialog, int which)
 			{
@@ -860,12 +862,31 @@ public class MainActivity extends ActionBarActivity {
 			@Override
 			public void onClick(DialogInterface dialog, int which)
 			{
-				dialog.dismiss();
+				dialog.cancel();
 				MainActivity.this.finish();
 			}
 		});
 
-		exitingWithTurnOffBTDialog = builder.create();
+		AlertDialog alertDialog = builder.create();
+
+		TimerAlertDialog.ConfirmButtonTextMaker textMaker =
+				new TimerAlertDialog.ConfirmButtonTextMaker() {
+					@Override
+					public String onMake(int time_remain_sec)
+					{
+						return String.format("关闭 (%d)", time_remain_sec);
+					}
+				};
+		turnOffBTDialog = new TimerAlertDialog(
+				alertDialog, turnOffBTDelayTimeS, textMaker);
+		alertDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
+			@Override
+			public void onCancel(DialogInterface dialog)
+			{
+				turnOffBTDialog.cancelTimer();
+			}
+		});
+
 	}
 
 	private void connectBTDev()
@@ -1007,7 +1028,7 @@ public class MainActivity extends ActionBarActivity {
 	private void exiting()
 	{
 		if (btAdapter.isEnabled()) {
-			exitingWithTurnOffBTDialog.show();
+			turnOffBTDialog.show();
 		} else {
 			this.finish();
 		}
@@ -1018,7 +1039,8 @@ public class MainActivity extends ActionBarActivity {
 
 	private OutputConsole outputConsole;
 
-	private AlertDialog exitingWithTurnOffBTDialog;
+	private TimerAlertDialog turnOffBTDialog;
+	private final int turnOffBTDelayTimeS = 5;
 	private StateManager stateManager;
 	private BTDeviceConnector btDeviceConnector = new BTDeviceConnector();
 	private BluetoothAdapter btAdapter;
