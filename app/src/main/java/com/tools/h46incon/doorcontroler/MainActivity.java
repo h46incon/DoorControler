@@ -83,6 +83,11 @@ public class MainActivity extends ActionBarActivity {
 			arrowHLManager.highlight(imageViews[curState.ordinal()]);
 		}
 
+		public void changeStateAndTrig(State state)
+		{
+			changeState(state);
+			BTClickHandler(state);
+		}
 
 		private void BTClickHandler(State state)
 		{
@@ -209,7 +214,8 @@ public class MainActivity extends ActionBarActivity {
 								@Override
 								public void run()
 								{
-									stateManager.changeState(State.EXIT);
+									//stateManager.changeState(State.EXIT);
+									stateManager.changeStateAndTrig(State.EXIT);
 									MyApp.showSimpleToast("理论上，门应该开了");
 								}
 							});
@@ -502,7 +508,8 @@ public class MainActivity extends ActionBarActivity {
 									@Override
 									public void run()
 									{
-										stateManager.changeState(State.OPEN_DOOR);
+										//stateManager.changeState(State.OPEN_DOOR);
+										stateManager.changeStateAndTrig(State.OPEN_DOOR);
 										outputConsole.printNewItem("连接设备成功");
 									}
 								});
